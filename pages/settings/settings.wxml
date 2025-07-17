@@ -1,0 +1,14 @@
+<!--settings.wxml-->
+<view class="container">
+  <view class="setting-item">
+    <text>提醒时间</text>
+    <picker mode="time" value="{{reminderTime}}" start="00:00" end="23:59" bindchange="changeReminderTime">
+      <view class="picker">
+        当前选择: {{reminderTime}}
+      </view>
+    </picker>
+  </view>
+  <view class="setting-item">
+    <button bindtap="clearSchedules">清除所有排班数据</button>
+  </view>
+</view>

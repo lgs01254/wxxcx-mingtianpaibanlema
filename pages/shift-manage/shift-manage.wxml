@@ -1,0 +1,11 @@
+<!--pages/shift-manage/shift-manage.wxml-->
+<view class="container">
+  <view class="shift-list-title">自定义班次管理</view>
+  <block wx:for="{{customShifts}}" wx:key="name">
+    <view class="shift-item">
+      <text class="shift-name">{{item}}</text>
+      <button class="btn-delete" data-name="{{item}}" bindtap="deleteShift">删除</button>
+    </view>
+  </block>
+  <view wx:if="!customShifts.length" class="empty-tip">暂无自定义班次</view>
+</view>

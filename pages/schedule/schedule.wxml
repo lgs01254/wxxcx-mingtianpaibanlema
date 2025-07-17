@@ -1,0 +1,32 @@
+<!--schedule.wxml-->
+<view class="container">
+  <view class="schedule-type-selector">
+    <radio-group class="radio-row" bindchange="changeScheduleType">
+      <label wx:for="{{scheduleTypes}}" wx:key="type">
+        <radio value="{{item}}" checked="{{scheduleType === item}}"/>{{item}}
+      </label>
+    </radio-group>
+    <view class="custom-type-row">
+      <input class="custom-type-input" placeholder="自定义班次" value="{{customType}}" bindinput="onCustomTypeInput" />
+      <button class="btn-secondary" bindtap="addCustomType">添加</button>
+      <button class="btn-secondary" bindtap="goToShiftManage">班次管理</button>
+    </view>
+  </view>
+  <view class="week-row">
+    <view wx:for="{{weekDays}}" wx:key="*this" class="week-label" style="width: 91rpx; display: flex; box-sizing: border-box">{{item}}</view>
+  </view>
+  <view class="date-grid">
+    <block wx:for="{{dateGrid}}" wx:key="date">
+      <view wx:if="{{item.empty}}" class="date-item empty"></view>
+      <view wx:else class="date-item {{item.isSelected ? 'selected' : ''}}" bindtap="toggleDateSelection" data-date="{{item.date}}">
+        <view class="date-circle">{{item.day}}</view>
+        <view class="date-schedule {{schedules[item.date] | toPinyin}}" wx:if="{{schedules[item.date]}}" bindtap="changeDateSchedule" data-date="{{item.date}}">{{schedules[item.date]}}</view>
+      </view>
+    </block>
+  </view>
+  <view class="button-area">
+    <button class="btn-secondary" bindtap="selectAllDates">全选</button>
+    <button class="btn-secondary" bindtap="clearSelectedDates">清空</button>
+    <button class="btn-primary" loading="{{isSaving}}" bindtap="saveSchedule">保存排班</button>
+  </view>
+</view>

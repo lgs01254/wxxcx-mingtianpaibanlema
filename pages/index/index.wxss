@@ -1,0 +1,205 @@
+/* index.wxss */
+.container {
+  padding: 20rpx;
+  background: linear-gradient(180deg, #e0eaff 0%, #f8faff 100%);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.weather-bar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10rpx 0 18rpx 0;
+  font-size: 28rpx;
+  color: #007AFF;
+  font-weight: bold;
+}
+.weather-city {
+  margin-right: 24rpx;
+}
+.weather-info {
+  font-size: 28rpx;
+}
+.top-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40rpx;
+  gap: 32rpx;
+}
+.day-card {
+  flex: 1;
+  margin: 0 24rpx;
+  background: linear-gradient(135deg, #7fbcff 0%, #a6e3ff 100%);
+  border-radius: 32rpx;
+  box-shadow: 0 6rpx 24rpx rgba(0,122,255,0.10);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 0 36rpx 0;
+  position: relative;
+}
+.today-card {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+.tomorrow-card {
+  background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+}
+.tomorrow-weather {
+  margin-top: 12rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.tomorrow-weather .weather-info {
+  font-size: 24rpx;
+  color: #007AFF;
+  font-weight: bold;
+}
+.date-art {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+  text-shadow: 2rpx 2rpx 8rpx #fff, 0 2rpx 8rpx #a1c4fd;
+  margin-bottom: 10rpx; /* 再往上移 */
+}
+.weekday {
+  font-size: 32rpx; /* 加大 */
+  color: #888;
+  font-weight: bold; /* 加粗 */
+  margin-bottom: 16rpx;
+}
+.day-label {
+  font-size: 36rpx;
+  color: #007AFF;
+  font-weight: bold;
+  margin-bottom: 18rpx;
+}
+.schedule-badge {
+  font-size: 40rpx; /* 加大 */
+  font-weight: bold; /* 加粗 */
+  padding: 10rpx 32rpx;
+  border-radius: 28rpx;
+  margin-top: 12rpx;
+  letter-spacing: 2rpx;
+}
+.schedule-badge.xiuxi {
+  background: #ff9800;
+}
+.schedule-badge.zaoban {
+  background: #007AFF;
+}
+.calendar-section {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  padding: 24rpx 10rpx 16rpx 10rpx;
+  margin-bottom: 24rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+.month-header-art {
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #007AFF;
+  margin-bottom: 10rpx;
+  letter-spacing: 2rpx;
+}
+.week-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+  width: 100%;
+}
+.week-label {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  color: #888;
+  font-weight: bold;
+}
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+.day-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 80rpx;
+  background: #f5f7fa;
+  border-radius: 16rpx;
+  padding: 8rpx 0 0 0;
+  position: relative;
+  transition: box-shadow 0.2s;
+}
+.day-item[style*='border'] {
+  box-shadow: 0 0 0 2rpx #ff9800;
+  background: #fffbe6;
+}
+.day-item.xiuxi {
+  background: #8fd8a5;
+  /* 更深的绿色底纹 */
+}
+.day-num {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+}
+.today-num {
+  color: #ff9800;
+  text-shadow: 0 2rpx 8rpx #fffbe6;
+}
+.schedule-indicator {
+  font-size: 20rpx;
+  margin-top: 2rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+  color: #fff;
+  background: #007AFF;
+  font-weight: bold;
+}
+.schedule-indicator.xiuxi {
+  background: #4CAF50;
+}
+.schedule-indicator.zaoban {
+  background: #007AFF;
+}
+.button-area {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-top: 20rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+button {
+  margin: 10rpx 10rpx;
+  border-radius: 30rpx;
+  font-size: 28rpx;
+  background: linear-gradient(90deg, #7fbcff 0%, #a1c4fd 100%);
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 0 2rpx 8rpx rgba(0,122,255,0.10);
+  min-width: 40%;
+  max-width: 48%;
+  box-sizing: border-box;
+}
+.top-swiper {
+  width: 100%;
+  height: 340rpx;
+  margin-bottom: 40rpx;
+}
+.top-swiper .swiper-item,
+.top-swiper .day-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 320rpx;
+}

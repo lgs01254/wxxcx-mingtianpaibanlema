@@ -1,0 +1,16 @@
+/* settings.wxss */
+.container {
+  padding: 20rpx;
+}
+.setting-item {
+  margin-bottom: 20rpx;
+}
+.picker {
+  padding: 10rpx;
+  border: 1px solid #cccccc;
+  border-radius: 5rpx;
+}
+button {
+  background-color: #ff3b30;
+  color: white;
+}

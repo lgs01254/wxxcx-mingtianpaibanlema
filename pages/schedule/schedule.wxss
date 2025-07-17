@@ -1,0 +1,143 @@
+/* schedule.wxss */
+.container {
+  padding: 20rpx;
+}
+.schedule-type-selector {
+  margin-bottom: 20rpx;
+}
+.radio-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.schedule-type-selector label {
+  margin-right: 40rpx;
+  font-size: 32rpx;
+}
+.custom-type-row {
+  display: flex;
+  align-items: center;
+  margin-top: 12rpx;
+}
+.custom-type-input {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 16rpx;
+  padding: 8rpx 16rpx;
+  font-size: 28rpx;
+  margin-right: 12rpx;
+}
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 8rpx;
+}
+.week-label {
+  text-align: center;
+  font-size: 24rpx;
+  color: #888;
+  font-weight: bold;
+  width: 60rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+.date-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10rpx;
+  margin-bottom: 20rpx;
+}
+.date-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  min-height: 80rpx;
+  transition: background 0.2s, color 0.2s;
+}
+.date-item.selected { background: none; box-shadow: none; }
+.date-item.selected .date-circle {
+  background: #007AFF !important;
+  color: #fff !important;
+  font-weight: bold;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.date-item.selected.xiuxi .date-circle {
+  background: #ff9800 !important;
+  color: #fff !important;
+}
+.date-item.selected.zaoban .date-circle {
+  background: #007AFF !important;
+  color: #fff !important;
+}
+.date-item:not(.selected) .date-circle {
+  background: #f0f0f0 !important;
+  color: #bbb !important;
+  font-weight: normal;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.date-item.empty {
+  background: transparent;
+  box-shadow: none;
+}
+.date-circle {
+  width: 60rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 32rpx;
+  transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.date-schedule {
+  font-size: 26rpx !important;
+  margin-top: 6rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 16rpx;
+  color: #fff;
+  background: #007AFF;
+  font-weight: bold;
+  cursor: pointer;
+}
+.date-schedule.xiuxi {
+  background: #ff9800;
+}
+.date-schedule.zaoban {
+  background: #007AFF;
+}
+.button-area {
+  margin-top: 20rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+.btn-primary {
+  flex: 1;
+  background: #007AFF;
+  color: #fff;
+  border: none;
+  border-radius: 30rpx;
+  font-size: 32rpx;
+  padding: 16rpx 0;
+  box-shadow: 0 2rpx 8rpx rgba(0,122,255,0.15);
+}
+.btn-secondary {
+  flex: 0.7;
+  background: #f0f0f0;
+  color: #007AFF;
+  border: none;
+  border-radius: 30rpx;
+  font-size: 28rpx;
+  padding: 16rpx 0;
+}

@@ -1,0 +1,35 @@
+/* pages/shift-manage/shift-manage.wxss */
+.container {
+  padding: 40rpx 20rpx;
+}
+.shift-list-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 32rpx;
+  color: #333;
+}
+.shift-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 0;
+  border-bottom: 1px solid #eee;
+}
+.shift-name {
+  font-size: 32rpx;
+  color: #222;
+}
+.btn-delete {
+  font-size: 28rpx;
+  color: #fff;
+  background: #ff4d4f;
+  border-radius: 16rpx;
+  padding: 8rpx 32rpx;
+  margin-left: 20rpx;
+}
+.empty-tip {
+  text-align: center;
+  color: #aaa;
+  font-size: 28rpx;
+  margin-top: 60rpx;
+}

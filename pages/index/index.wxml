@@ -1,0 +1,35 @@
+<!--index.wxml-->
+<view class="container">
+  <swiper class="top-swiper" current="{{topCardsIndex}}" circular="false" bindchange="onTopCardsChange">
+    <block wx:for="{{topCards}}" wx:key="date">
+      <swiper-item>
+        <view class="day-card {{item.label === '今天' ? 'today-card' : (item.label === '明天' ? 'tomorrow-card' : '')}}">
+          <text class="date-art">{{item.date}}</text>
+          <text class="weekday">{{item.weekday}}</text>
+          <text class="day-label">{{item.label}}</text>
+          <view class="schedule-badge {{item.schedule | toPinyin}}">{{item.schedule}}</view>
+        </view>
+      </swiper-item>
+    </block>
+  </swiper>
+  <!-- 日历部分恢复为单月显示 -->
+  <view class="calendar-section">
+    <view class="month-header-art">{{currentMonth}}</view>
+    <view class="week-row">
+      <text wx:for="{{weekDays}}" wx:key="*this" class="week-label">{{item}}</text>
+    </view>
+    <view class="days-grid">
+      <block wx:for="{{days}}" wx:key="day">
+        <view wx:if="{{item.empty}}" class="day-item empty"></view>
+        <view wx:else class="day-item{{schedules[item.date]==='休息' ? ' xiuxi' : ''}}" style="{{item.isToday ? 'border:2rpx solid #ff9800;' : ''}}">
+          <text class="day-num {{item.isToday ? 'today-num' : ''}}">{{item.day}}</text>
+          <view class="schedule-indicator {{schedules[item.date] | toPinyin}}" wx:if="{{schedules[item.date]}}">{{schedules[item.date]}}</view>
+        </view>
+      </block>
+    </view>
+  </view>
+  <view class="button-area" style="height: 97rpx; display: flex; box-sizing: border-box">
+    <button bindtap="navigateToSchedule" style="position: relative; left: 1rpx; top: -10rpx">排班</button>
+    
+  </view>
+</view>
