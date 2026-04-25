@@ -1,35 +1,205 @@
 <!--index.wxml-->
 <view class="container">
+  <!-- 员工模式标题 -->
+  <view wx:if="{{isEmployeeMode}}" class="employee-title">
+    {{employeeName}}的{{currentMonth}}排班
+  </view>
+  
+  <!-- 设置按钮 -->
+  <view wx:if="{{!isEmployeeMode}}" class="settings-btn" bindtap="navigateToSettings">
+    <text>⚙️</text>
+  </view>
+  
   <swiper class="top-swiper" current="{{topCardsIndex}}" circular="false" bindchange="onTopCardsChange">
     <block wx:for="{{topCards}}" wx:key="date">
       <swiper-item>
-        <view class="day-card {{item.label === '今天' ? 'today-card' : (item.label === '明天' ? 'tomorrow-card' : '')}}">
-          <text class="date-art">{{item.date}}</text>
-          <text class="weekday">{{item.weekday}}</text>
-          <text class="day-label">{{item.label}}</text>
-          <view class="schedule-badge {{item.schedule | toPinyin}}">{{item.schedule}}</view>
+        <view class="day-card {{item.label === '今天' ? 'today-card' : (item.label === '明天' ? 'tomorrow-card' : '')}}" style="height: 324rpx; display: flex; box-sizing: border-box; left: 2rpx; top: 0rpx; width: 702rpx; position: relative">
+          <!-- 左边空白预留区域 -->
+          <view class="left-blank-area">
+            <!-- 天气模块 -->
+            <view class="weather-module" wx:if="{{item.weather}}">
+              <!-- 当天天气：实时温度 + 天气图标 + 最低~最高温度 + 城市 -->
+              <view wx:if="{{item.weather.type === 'realtime'}}" class="realtime-weather">
+                <view class="weather-main">
+                  <text class="realtime-temp">{{item.weather.temp}}°</text>
+                  <text class="weather-emoji">{{getWeatherIcon(item.weather.icon)}}</text>
+                </view>
+                <view class="weather-range">
+                  <text class="temp-range">{{item.weather.temp}}°</text>
+                </view>
+                <text class="weather-desc">{{item.weather.text}}</text>
+                <text class="location" bindtap="showCitySelector">{{city}}</text>
+              </view>
+              
+              <!-- 明天及之后：最高温度 + 最低~最高温度 + 天气 + 城市 -->
+              <view wx:elif="{{item.weather.type === 'forecast'}}" class="forecast-weather" style="height: 218rpx; display: flex; box-sizing: border-box; position: relative; left: 2rpx; top: -46rpx; width: 122rpx">
+                <view class="weather-main">
+                  <text class="forecast-temp">{{item.weather.tempMax}}°</text>
+                  <text class="weather-emoji">{{getWeatherIcon(item.weather.icon)}}</text>
+                </view>
+                <view class="weather-range">
+                  <text class="temp-range">{{item.weather.tempMin}}°~{{item.weather.tempMax}}°</text>
+                </view>
+                <text class="weather-desc">{{item.weather.text}}</text>
+                <text class="location" bindtap="showCitySelector">{{city}}</text>
+              </view>
+            </view>
+            
+            <!-- 如果没有天气信息，显示城市选择提示 -->
+            <view class="weather-module" wx:else bindtap="showCitySelector">
+              <view class="weather-icon">
+                <text class="weather-emoji">🌤️</text>
+              </view>
+              <view class="weather-info">
+                <text class="temperature">--°</text>
+                <text class="weather-desc">暂无天气</text>
+                <text class="location">{{city}}</text>
+              </view>
+              <view class="city-edit-hint">
+                <text class="hint-text">点击输入城市</text>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 中间排班信息区域 -->
+          <view class="center-schedule-area" style="height: 272rpx; display: flex; box-sizing: border-box">
+            <text class="date-art">{{item.date}}</text>
+            <text class="weekday">{{item.weekday}}</text>
+            <text class="day-label">{{item.label}}</text>
+            <view class="schedule-badge {{item.schedule | toPinyin}}">{{item.schedule}}</view>
+          </view>
+          
+          <!-- 右边备注显示区域 -->
+          <view class="right-remark-area" style="position: relative; left: 2rpx; top: 0rpx; height: 342rpx; display: flex; box-sizing: border-box">
+            <view class="remark-display-area" wx:if="{{remarks[item.date]}}">
+              <text class="remark-text">{{item.remarkFormatted}}</text>
+            </view>
+          </view>
         </view>
       </swiper-item>
     </block>
   </swiper>
   <!-- 日历部分恢复为单月显示 -->
-  <view class="calendar-section">
-    <view class="month-header-art">{{currentMonth}}</view>
+  <view class="calendar-section" style="position: relative; left: -7rpx; top: -48rpx; height: 838rpx; display: block; box-sizing: border-box; width: 702rpx" bindtouchstart="onCalendarTouchStart" bindtouchend="onCalendarTouchEnd">
+    <view class="month-switch">
+      <button class="month-switch-btn" size="mini" bindtap="changeMonth" data-type="prev">＜</button>
+      <text class="month-text">{{currentMonth}}</text>
+      <button class="month-switch-btn" size="mini" bindtap="changeMonth" data-type="next">＞</button>
+    </view>
     <view class="week-row">
       <text wx:for="{{weekDays}}" wx:key="*this" class="week-label">{{item}}</text>
     </view>
-    <view class="days-grid">
-      <block wx:for="{{days}}" wx:key="day">
-        <view wx:if="{{item.empty}}" class="day-item empty"></view>
-        <view wx:else class="day-item{{schedules[item.date]==='休息' ? ' xiuxi' : ''}}" style="{{item.isToday ? 'border:2rpx solid #ff9800;' : ''}}">
-          <text class="day-num {{item.isToday ? 'today-num' : ''}}">{{item.day}}</text>
-          <view class="schedule-indicator {{schedules[item.date] | toPinyin}}" wx:if="{{schedules[item.date]}}">{{schedules[item.date]}}</view>
+    <block wx:if="{{dualMode}}">
+      <view class="calendar-dual">
+        <view class="calendar-track" animation="{{calendarTrackAnim}}">
+          <!-- 左侧面板 -->
+          <view class="days-grid panel" style="height: 697rpx; display: grid; box-sizing: border-box">
+            <block wx:for="{{dualLeftDays}}" wx:key="dayL">
+              <view wx:if="{{item.empty}}" class="day-item empty"></view>
+              <view wx:else class="day-item{{schedules[item.date]==='休息' ? ' xiuxi' : ''}}{{schedules[item.date] && schedules[item.date].indexOf('假') !== -1 && schedules[item.date] !== '休息' ? ' jia' : ''}}" style="{{item.isToday ? 'border:2rpx solid #ff9800;' : ''}}" bindlongpress="onDayLongPress" bindtap="onDayTap" data-date="{{item.date}}">
+                <text class="day-num {{item.isToday ? 'today-num' : ''}}">{{item.day}}</text>
+                <text class="lunar-text">{{item.solarTerm || item.lunar}}</text>
+                <view class="schedule-indicator {{schedules[item.date] | toPinyin}}" wx:if="{{schedules[item.date]}}" style="background:{{schedules[item.date]==='早班' ? '#007AFF' : (schedules[item.date]==='休息' ? '#4CAF50' : (schedules[item.date]==='中班' ? '#FF9800' : (schedules[item.date] && schedules[item.date].indexOf('假') !== -1 ? '#FFD700' : '#007AFF')))}}">{{schedules[item.date]}}</view>
+                <view wx:if="{{remarks[item.date]}}" class="remark-badge"></view>
+              </view>
+            </block>
+          </view>
+          <!-- 右侧面板 -->
+          <view class="days-grid panel" style="height: 697rpx; display: grid; box-sizing: border-box">
+            <block wx:for="{{dualRightDays}}" wx:key="dayR">
+              <view wx:if="{{item.empty}}" class="day-item empty"></view>
+              <view wx:else class="day-item{{schedules[item.date]==='休息' ? ' xiuxi' : ''}}{{schedules[item.date] && schedules[item.date].indexOf('假') !== -1 && schedules[item.date] !== '休息' ? ' jia' : ''}}" style="{{item.isToday ? 'border:2rpx solid #ff9800;' : ''}}" bindlongpress="onDayLongPress" bindtap="onDayTap" data-date="{{item.date}}">
+                <text class="day-num {{item.isToday ? 'today-num' : ''}}">{{item.day}}</text>
+                <text class="lunar-text">{{item.solarTerm || item.lunar}}</text>
+                <view class="schedule-indicator {{schedules[item.date] | toPinyin}}" wx:if="{{schedules[item.date]}}" style="background:{{schedules[item.date]==='早班' ? '#007AFF' : (schedules[item.date]==='休息' ? '#4CAF50' : (schedules[item.date]==='中班' ? '#FF9800' : (schedules[item.date] && schedules[item.date].indexOf('假') !== -1 ? '#FFD700' : '#007AFF')))}}">{{schedules[item.date]}}</view>
+                <view wx:if="{{remarks[item.date]}}" class="remark-badge"></view>
+              </view>
+            </block>
+          </view>
         </view>
-      </block>
+      </view>
+    </block>
+    <block wx:else>
+      <view class="days-grid {{calendarAnimClass}}" animation="{{calendarAnim}}" style="height: 697rpx; display: grid; box-sizing: border-box">
+        <block wx:for="{{days}}" wx:key="day">
+          <view wx:if="{{item.empty}}" class="day-item empty"></view>
+          <view wx:else class="day-item{{schedules[item.date]==='休息' ? ' xiuxi' : ''}}{{schedules[item.date] && schedules[item.date].indexOf('假') !== -1 && schedules[item.date] !== '休息' ? ' jia' : ''}}" style="{{item.isToday ? 'border:2rpx solid #ff9800;' : ''}}" bindlongpress="onDayLongPress" bindtap="onDayTap" data-date="{{item.date}}">
+            <text class="day-num {{item.isToday ? 'today-num' : ''}}">{{item.day}}</text>
+            <text class="lunar-text">{{item.solarTerm || item.lunar}}</text>
+            <view class="schedule-indicator {{schedules[item.date] | toPinyin}}" wx:if="{{schedules[item.date]}}" style="background:{{schedules[item.date]==='早班' ? '#007AFF' : (schedules[item.date]==='休息' ? '#4CAF50' : (schedules[item.date]==='中班' ? '#FF9800' : (schedules[item.date] && schedules[item.date].indexOf('假') !== -1 ? '#FFD700' : '#007AFF')))}}">{{schedules[item.date]}}</view>
+            <view wx:if="{{remarks[item.date]}}" class="remark-badge"></view>
+          </view>
+        </block>
+      </view>
+    </block>
+  </view>
+  <view class="button-area" wx:if="{{!isEmployeeMode}}" style="height: 127rpx; display: flex; justify-content: space-around; align-items: center; box-sizing: border-box; padding: 0 10rpx; width: 712rpx; position: relative; left: -11rpx; top: -100rpx">
+    <view bindtap="navigateToSchedule" style="width: 148rpx; height: 48rpx; background-color: #007AFF; color: white; display: flex; justify-content: center; align-items: center; border-radius: 8rpx; font-size: 20rpx; margin: 0 5rpx; box-sizing: border-box">排班</view>
+    <button class="share-btn" open-type="share" data-share-type="monthSchedule" style="width: 148rpx; height: 50rpx; background-color: #007AFF; color: white; display: flex; justify-content: center; align-items: center; border-radius: 8rpx; font-size: 20rpx; margin: 0 5rpx; box-sizing: border-box; border: none;">分享</button>
+  </view>
+  <view wx:if="{{showTypePopup}}" class="type-popup-mask" bindtap="closeTypePopup"></view>
+  <view wx:if="{{showTypePopup}}" class="type-popup" style="left:{{popupX}}px;top:{{popupY}}px;width:{{typePopupWidth}}px;">
+    <block wx:for="{{allTypeNames}}" wx:key="type">
+      <view class="type-popup-item" data-type="{{item}}" bindtap="onSelectTypeFromPopup">{{item}}</view>
+    </block>
+  </view>
+  <!-- 备注弹窗 -->
+  <view wx:if="{{showRemarkModal}}" class="remark-modal-mask" bindtap="closeRemarkModal"></view>
+  <view wx:if="{{showRemarkModal}}" class="remark-modal" style="top: {{keyboardHeight > 0 ? '20%' : '50%'}}; transform: translate(-50%, -50%);">
+    <view class="remark-header">
+      <text class="remark-title">备注 - {{remarkDate}}</text>
+    </view>
+    <view class="remark-content">
+      <textarea class="remark-input" placeholder="请输入备注内容..." value="{{remarkContent}}" bindinput="onRemarkInput" bindfocus="onRemarkFocus" bindblur="onRemarkBlur" maxlength="200" auto-height="true"></textarea>
+    </view>
+    <view class="remark-buttons">
+      <button class="btn-danger" bindtap="deleteRemark">删除</button>
+      <button class="btn-primary" bindtap="saveRemark">保存</button>
     </view>
   </view>
-  <view class="button-area" style="height: 97rpx; display: flex; box-sizing: border-box">
-    <button bindtap="navigateToSchedule" style="position: relative; left: 1rpx; top: -10rpx">排班</button>
-    
+  <!-- 城市选择弹窗 -->
+  <view wx:if="{{showCityModal}}" class="remark-modal-mask" bindtap="closeCityModal"></view>
+  <view wx:if="{{showCityModal}}" class="remark-modal" style="top: 50%; transform: translate(-50%, -50%);">
+    <view class="remark-header">
+      <text class="remark-title">切换城市</text>
+    </view>
+    <view class="remark-content">
+      <input type="text" class="remark-input" placeholder="{{cityInputPlaceholder}}" value="{{cityInputValue}}" bindfocus="onCityInputFocus" bindblur="onCityInputBlur" bindinput="onCityInputChange" confirm-type="done" bindconfirm="confirmCityInput" />
+    </view>
+    <view class="remark-buttons">
+      <button class="btn-danger" bindtap="closeCityModal">取消</button>
+      <button class="btn-primary" bindtap="confirmCityInput">确定</button>
+    </view>
+  </view>
+  
+  <!-- 通知中心入口 -->
+  <view class="notification-entry" bindtap="showNotificationModal" style="position: fixed; top: 90rpx; right: 20rpx; z-index: 9999; width: 60rpx; height: 60rpx; background-color: #f0f0f0; border-radius: 30rpx; display: flex; justify-content: center; align-items: center;">
+    <text style="font-size: 30rpx;">📢</text>
+    <view wx:if="{{unreadCount > 0}}" style="position: absolute; top: -5rpx; right: -5rpx; background-color: red; color: white; border-radius: 15rpx; width: 30rpx; height: 30rpx; font-size: 20rpx; display: flex; justify-content: center; align-items: center;">{{unreadCount}}</view>
+  </view>
+  
+  <!-- 通知中心弹窗 -->
+  <view wx:if="{{showNotificationModal}}" class="remark-modal-mask" bindtap="closeNotificationModal"></view>
+  <view wx:if="{{showNotificationModal}}" class="remark-modal" style="top: 50%; transform: translate(-50%, -50%); width: 80%;">
+    <view class="remark-header">
+      <text class="remark-title">通知中心</text>
+    </view>
+    <view class="remark-content" style="max-height: 500rpx; overflow-y: auto;">
+      <block wx:for="{{notifications}}" wx:key="_id">
+        <view class="notification-item" style="padding: 15rpx; border-bottom: 1rpx solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <view style="flex: 1;">
+            <text style="font-size: 24rpx;">{{item.content}}</text>
+            <text style="font-size: 18rpx; color: #999; margin-top: 5rpx; display: block;">{{item.createdAt}}</text>
+          </view>
+          <view wx:if="{{!item.isRead}}" style="width: 10rpx; height: 10rpx; background-color: red; border-radius: 5rpx; margin-left: 10rpx;"></view>
+        </view>
+      </block>
+      <view wx:if="{{notifications.length === 0}}" style="text-align: center; padding: 50rpx 0; color: #999;">
+        <text>暂无通知</text>
+      </view>
+    </view>
+    <view class="remark-buttons">
+      <button class="btn-primary" bindtap="closeNotificationModal">关闭</button>
+    </view>
   </view>
 </view>

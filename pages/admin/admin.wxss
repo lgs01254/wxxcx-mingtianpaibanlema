@@ -1,0 +1,325 @@
+.admin-container {
+  background: #f5f6fa;
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+/* 头部 */
+.header-bar {
+  background: #fff;
+  padding: 30rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  margin-bottom: 20rpx;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #2c3e50;
+}
+.month-selector {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.arrow-btn {
+  font-size: 28rpx;
+  color: #007AFF;
+  padding: 10rpx 16rpx;
+}
+.month-text {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 卡片通用 */
+.employee-card,
+.schedule-card {
+  background: #fff;
+  margin: 20rpx;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.03);
+}
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 24rpx;
+  border-left: 6rpx solid #007AFF;
+  padding-left: 20rpx;
+}
+
+/* 员工输入 */
+.employee-input-row {
+  display: flex;
+  margin-bottom: 20rpx;
+  gap: 20rpx;
+}
+.employee-input {
+  flex: 1;
+  height: 72rpx;
+  background: #f8f9fc;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  border: 1rpx solid #e9ecf1;
+}
+.add-btn {
+  height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 36rpx;
+  background: #007AFF;
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+.employee-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+.employee-tag {
+  background: #f0f4ff;
+  border-radius: 40rpx;
+  padding: 12rpx 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  border: 1rpx solid #e0e6ff;
+}
+.employee-name {
+  font-size: 28rpx;
+  color: #1e3a8a;
+  font-weight: 500;
+}
+.tag-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+/* 小按钮 */
+.mini {
+  font-size: 22rpx !important;
+  padding: 4rpx 16rpx !important;
+  border-radius: 20rpx !important;
+  line-height: 1.8;
+  margin: 0;
+}
+.share-btn.mini {
+  background: #007AFF;
+  color: #fff;
+  border: none;
+}
+.delete-btn.mini {
+  background: #fff;
+  color: #e74c3c;
+  border: 1rpx solid #e74c3c;
+}
+.empty-tip {
+  color: #aaa;
+  font-size: 28rpx;
+  text-align: center;
+  padding: 40rpx;
+}
+
+/* ========== 表格核心布局 ========== */
+.table-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+.schedule-table {
+  display: inline-block;
+  min-width: 100%;
+  border: 1rpx solid #f0f2f5;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* 每一行都是 flex */
+.table-header,
+.table-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1rpx solid #f4f5f7;
+}
+.table-header {
+  background: #f9fafc;
+  border-bottom: 2rpx solid #eee;
+}
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* 通用单元格 */
+.cell {
+  min-width: 120rpx;      /* 所有日期/班次列统一宽度 */
+  padding: 20rpx 12rpx;
+  text-align: center;
+  font-size: 26rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-right: 1rpx solid #f0f2f5;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.cell:last-child {
+  border-right: none;
+}
+.header-cell {
+  font-weight: 600;
+  color: #556;
+}
+
+/* 固定姓名列 */
+.name-cell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+  border-right: 2rpx solid #eee;
+  min-width: 130rpx;      /* 姓名列稍宽一些 */
+  font-weight: 600;
+}
+.table-header .name-cell {
+  background: #f9fafc;
+  z-index: 3;
+}
+
+/* 日期表头（显示日期数字和星期） */
+.date-cell {
+  min-width: 120rpx;
+  font-size: 22rpx;
+}
+.header-day {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+.header-weekday {
+  font-size: 20rpx;
+  color: #999;
+}
+
+/* 班次格子 - 宽度与日期列完全相同 */
+.shift-cell {
+  background: #fcfcfc;
+  color: #999;
+  transition: 0.2s;
+  min-width: 120rpx;          /* 与日期列一致 */
+  padding: 20rpx 12rpx;       /* 与 .cell 保持一致 */
+  margin: 0;                  /* 移除任何 margin */
+  border-radius: 0;           /* 默认无圆角 */
+}
+/* 有排班时的样式：仅改变背景和文字颜色，不影响尺寸 */
+.shift-cell.has-shift {
+  color: #ffffff !important;
+  font-weight: 500;
+  border-radius: 12rpx;       /* 仅圆角美化 */
+  /* 注意：不添加额外的 padding 或 margin */
+}
+.shift-cell:active {
+  opacity: 0.7;
+}
+
+/* 固定操作列 */
+.action-cell {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #fff;
+  border-left: 2rpx solid #eee;
+  min-width: 140rpx;
+  flex-direction: row;
+  gap: 10rpx;
+}
+.table-header .action-cell {
+  background: #f9fafc;
+}
+
+.share-icon-btn,
+.delete-icon-btn {
+  background: transparent;
+  border: none;
+  font-size: 36rpx;
+  padding: 0 10rpx;
+  line-height: 1;
+}
+.delete-icon-btn {
+  color: #e74c3c;
+}
+
+/* ========== 弹窗 ========== */
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 100;
+}
+.shift-popup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 32rpx;
+  padding: 40rpx;
+  width: 80%;
+  z-index: 101;
+  box-shadow: 0 20rpx 50rpx rgba(0,0,0,0.15);
+}
+.popup-title {
+  text-align: center;
+  margin-bottom: 30rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #333;
+}
+.shift-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+}
+.shift-option {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: #f5f7fa;
+  padding: 16rpx 28rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+.shift-option:active {
+  background: #e9ecf1;
+}
+.shift-option.clear {
+  background: #fff0f0;
+  color: #e74c3c;
+}
+.color-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: #007AFF;
+}
+.popup-cancel {
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+  border-top: 1rpx solid #eee;
+  padding-top: 20rpx;
+}

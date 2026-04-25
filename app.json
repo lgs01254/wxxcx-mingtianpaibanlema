@@ -1,9 +1,11 @@
 {
+  "cloud": true,
   "pages": [
     "pages/index/index",
     "pages/schedule/schedule",
     "pages/settings/settings",
-    "pages/shift-manage/shift-manage"
+    "pages/shift-manage/shift-manage",
+    "pages/admin/admin"
   ],
   "window": {
     "backgroundTextStyle": "light",

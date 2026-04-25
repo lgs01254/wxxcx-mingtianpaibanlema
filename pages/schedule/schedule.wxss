@@ -61,6 +61,52 @@
   background: none;
   min-height: 80rpx;
   transition: background 0.2s, color 0.2s;
+  border-radius: 12rpx; /* 添加圆角 */
+}
+
+/* 已排班日期的特殊样式 */
+.date-item.has-schedule {
+  background: rgba(0, 122, 255, 0.15); /* 加深蓝色背景 */
+  border: 2rpx solid rgba(0, 122, 255, 0.35); /* 加深蓝色边框 */
+  position: relative;
+  box-shadow: 0 3rpx 8rpx rgba(0, 122, 255, 0.2); /* 加深蓝色阴影 */
+}
+
+.date-item.has-schedule.xiuxi {
+  background: rgba(76, 175, 80, 0.15); /* 加深绿色背景 */
+  border: 2rpx solid rgba(76, 175, 80, 0.35); /* 加深绿色边框 */
+  box-shadow: 0 3rpx 8rpx rgba(76, 175, 80, 0.2); /* 加深绿色阴影 */
+}
+
+.date-item.has-schedule.zaoban {
+  background: rgba(0, 122, 255, 0.15); /* 加深蓝色背景 */
+  border: 2rpx solid rgba(0, 122, 255, 0.35); /* 加深蓝色边框 */
+  box-shadow: 0 3rpx 8rpx rgba(0, 122, 255, 0.2); /* 加深蓝色阴影 */
+}
+
+.date-item.has-schedule.zhongban {
+  background: rgba(255, 152, 0, 0.15); /* 加深橙色背景 */
+  border: 2rpx solid rgba(255, 152, 0, 0.35); /* 加深橙色边框 */
+  box-shadow: 0 3rpx 8rpx rgba(255, 152, 0, 0.2); /* 加深橙色阴影 */
+}
+
+.date-item.has-schedule.jia {
+  background: rgba(255, 215, 0, 0.15); /* 加深黄色背景 */
+  border: 2rpx solid rgba(255, 215, 0, 0.35); /* 加深黄色边框 */
+  box-shadow: 0 3rpx 8rpx rgba(255, 215, 0, 0.2); /* 加深黄色阴影 */
+}
+
+/* 已排班日期的悬停效果 */
+.date-item.has-schedule:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+/* 已排班日期的选中状态 */
+.date-item.has-schedule.selected {
+  background: rgba(0, 122, 255, 0.25) !important;
+  border: 2rpx solid rgba(0, 122, 255, 0.6) !important;
+  box-shadow: 0 4rpx 12rpx rgba(0, 122, 255, 0.3);
 }
 .date-item.selected { background: none; box-shadow: none; }
 .date-item.selected .date-circle {
@@ -101,14 +147,18 @@
   transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 .date-schedule {
-  font-size: 26rpx !important;
+  font-size: 20rpx !important;
   margin-top: 6rpx;
-  padding: 4rpx 16rpx;
+  padding: 4rpx 8rpx;
   border-radius: 16rpx;
   color: #fff;
   background: #007AFF;
   font-weight: bold;
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 1rpx;
 }
 .date-schedule.xiuxi {
   background: #ff9800;
@@ -116,28 +166,117 @@
 .date-schedule.zaoban {
   background: #007AFF;
 }
+.date-schedule.three-chars {
+  font-size: 18rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 1rpx;
+}
+/* 备注弹窗样式 */
+.remark-modal-mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+.remark-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 600rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  z-index: 1001;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
+}
+.remark-header {
+  padding: 32rpx 32rpx 16rpx;
+  border-bottom: 1rpx solid #eee;
+}
+.remark-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+.remark-content {
+  padding: 32rpx;
+}
+.remark-input {
+  width: 100%;
+  height: 200rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  padding: 16rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+.remark-buttons {
+  display: flex;
+  padding: 16rpx 32rpx 32rpx;
+  gap: 16rpx;
+}
+.remark-buttons button {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 28rpx;
+  border-radius: 8rpx;
+}
 .button-area {
   margin-top: 20rpx;
   display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
+  flex-wrap: nowrap; /* 不换行 */
+  gap: 8rpx; /* 进一步减小间距 */
+  align-items: center;
+  justify-content: space-between; /* 平均分布 */
+  width: 100%;
+  box-sizing: border-box;
 }
+
 .btn-primary {
-  flex: 1;
+  flex: 1; /* 占用相等空间 */
   background: #007AFF;
   color: #fff;
   border: none;
   border-radius: 30rpx;
-  font-size: 32rpx;
-  padding: 16rpx 0;
+  font-size: 24rpx; /* 统一字体大小 */
+  padding: 12rpx 8rpx; /* 统一内边距 */
   box-shadow: 0 2rpx 8rpx rgba(0,122,255,0.15);
+  white-space: nowrap; /* 文字不换行 */
+  overflow: hidden; /* 防止内容溢出 */
+  text-overflow: ellipsis; /* 文字过长时显示省略号 */
+  min-width: 0; /* 允许收缩 */
 }
+
 .btn-secondary {
-  flex: 0.7;
+  flex: 1; /* 占用相等空间 */
   background: #f0f0f0;
   color: #007AFF;
   border: none;
   border-radius: 30rpx;
-  font-size: 28rpx;
-  padding: 16rpx 0;
+  font-size: 24rpx; /* 统一字体大小 */
+  padding: 12rpx 8rpx; /* 统一内边距 */
+  white-space: nowrap; /* 文字不换行 */
+  overflow: hidden; /* 防止内容溢出 */
+  text-overflow: ellipsis; /* 文字过长时显示省略号 */
+  min-width: 0; /* 允许收缩 */
+}
+
+.btn-danger {
+  flex: 1; /* 占用相等空间 */
+  background: #ff4d4f;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 30rpx; /* 统一圆角 */
+  font-size: 24rpx; /* 统一字体大小 */
+  padding: 12rpx 8rpx; /* 统一内边距 */
+  white-space: nowrap; /* 文字不换行 */
+  overflow: hidden; /* 防止内容溢出 */
+  text-overflow: ellipsis; /* 文字过长时显示省略号 */
+  min-width: 0; /* 允许收缩 */
 }

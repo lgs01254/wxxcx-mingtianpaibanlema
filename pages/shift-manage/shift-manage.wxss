@@ -27,9 +27,102 @@
   padding: 8rpx 32rpx;
   margin-left: 20rpx;
 }
+.btn-add {
+  font-size: 28rpx;
+  color: #fff;
+  background: #007AFF;
+  border-radius: 16rpx;
+  padding: 10rpx 32rpx;
+}
 .empty-tip {
   text-align: center;
   color: #aaa;
   font-size: 28rpx;
   margin-top: 60rpx;
+}
+/* 颜色选择行与小圆点 */
+.color-row {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 12rpx;
+  flex-wrap: wrap;
+}
+.color-dot {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 2rpx solid #eee;
+}
+.color-dot.active {
+  box-shadow: 0 0 0 4rpx rgba(0,0,0,0.08);
+  border-color: #333;
+}
+/* 弹窗通用样式（与首页备注弹窗一致） */
+.remark-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+.remark-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 600rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+}
+.remark-header {
+  padding: 32rpx 32rpx 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+  text-align: center;
+}
+.remark-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+.remark-content {
+  padding: 24rpx 32rpx;
+}
+.remark-input {
+  width: 100%;
+  min-height: 80rpx;
+  padding: 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #333;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+.remark-buttons {
+  display: flex;
+  gap: 24rpx;
+  padding: 24rpx 32rpx 32rpx;
+  border-top: 2rpx solid #f0f0f0;
+}
+.remark-buttons button {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  border: none;
+}
+.btn-primary {
+  background: #007AFF;
+  color: #fff;
+}
+.btn-danger {
+  background: #ff4757;
+  color: #fff;
 }

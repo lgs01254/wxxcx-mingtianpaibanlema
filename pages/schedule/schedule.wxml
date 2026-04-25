@@ -1,32 +1,49 @@
 <!--schedule.wxml-->
 <view class="container">
   <view class="schedule-type-selector">
-    <radio-group class="radio-row" bindchange="changeScheduleType">
-      <label wx:for="{{scheduleTypes}}" wx:key="type">
-        <radio value="{{item}}" checked="{{scheduleType === item}}"/>{{item}}
+    <radio-group class="radio-row" bindchange="changeScheduleType" style="position: relative; left: 1rpx; top: -22rpx; width: 740rpx; display: flex; box-sizing: border-box; height: 191rpx">
+      <label wx:for="{{scheduleTypes}}" wx:key="type" style="display: flex; align-items: center;">
+        <radio value="{{item.name || item}}" checked="{{scheduleType === (item.name || item)}}"/>
+        <text>{{item.name || item}}</text>
+        <view wx:if="{{item.color || item.name==='休息' || item.name==='中班'}}" style="width: 24rpx; height: 24rpx; border-radius: 50%; margin-left: 12rpx; background:{{item.name==='休息' ? '#4CAF50' : (item.name==='中班' ? '#FF9800' : item.color)}}; border:1.5rpx solid #ccc;"></view>
       </label>
     </radio-group>
     <view class="custom-type-row">
       <input class="custom-type-input" placeholder="自定义班次" value="{{customType}}" bindinput="onCustomTypeInput" />
-      <button class="btn-secondary" bindtap="addCustomType">添加</button>
+      <button class="btn-secondary" bindtap="addCustomType" style="width: 250rpx; display: block; box-sizing: border-box; left: 0rpx; top: 0rpx">添加</button>
       <button class="btn-secondary" bindtap="goToShiftManage">班次管理</button>
     </view>
   </view>
   <view class="week-row">
     <view wx:for="{{weekDays}}" wx:key="*this" class="week-label" style="width: 91rpx; display: flex; box-sizing: border-box">{{item}}</view>
   </view>
-  <view class="date-grid">
+  <view class="date-grid" style="width: 698rpx; height: 770rpx; display: grid; box-sizing: border-box">
     <block wx:for="{{dateGrid}}" wx:key="date">
       <view wx:if="{{item.empty}}" class="date-item empty"></view>
-      <view wx:else class="date-item {{item.isSelected ? 'selected' : ''}}" bindtap="toggleDateSelection" data-date="{{item.date}}">
+      <view wx:else class="date-item {{item.isSelected ? 'selected' : ''}} {{schedules[item.date] ? 'has-schedule' : ''}} {{schedules[item.date] ? (schedules[item.date] === '休息' ? 'xiuxi' : (schedules[item.date] === '中班' ? 'zhongban' : (schedules[item.date] && schedules[item.date].indexOf('假') !== -1 ? 'jia' : 'zaoban'))) : ''}}" bindtap="toggleDateSelection" bindlongpress="onDateLongPress" data-date="{{item.date}}">
         <view class="date-circle">{{item.day}}</view>
-        <view class="date-schedule {{schedules[item.date] | toPinyin}}" wx:if="{{schedules[item.date]}}" bindtap="changeDateSchedule" data-date="{{item.date}}">{{schedules[item.date]}}</view>
+        <view class="date-schedule {{schedules[item.date] | toPinyin}}{{schedules[item.date] && schedules[item.date].length === 3 ? ' three-chars' : ''}}" wx:if="{{schedules[item.date]}}" bindtap="changeDateSchedule" data-date="{{item.date}}" style="background:{{getShiftColor(schedules[item.date])}}">{{schedules[item.date]}}</view>
       </view>
     </block>
   </view>
-  <view class="button-area">
+  <view class="button-area" style="height: 103rpx; display: flex; box-sizing: border-box">
     <button class="btn-secondary" bindtap="selectAllDates">全选</button>
-    <button class="btn-secondary" bindtap="clearSelectedDates">清空</button>
-    <button class="btn-primary" loading="{{isSaving}}" bindtap="saveSchedule">保存排班</button>
+    <button class="btn-secondary" bindtap="clearSelectedDates">清除选中</button>
+    <button class="btn-danger" bindtap="clearMonthSchedules" style="width: 120rpx; display: block; box-sizing: border-box; left: 0rpx; top: 0rpx">清空排班</button>
+    <button class="btn-primary" loading="{{isSaving}}" bindtap="saveSchedule" style="width: 262rpx; display: block; box-sizing: border-box; left: 0rpx; top: 0rpx">保存排班</button>
+  </view>
+  <!-- 备注弹窗 -->
+  <view wx:if="{{showRemarkModal}}" class="remark-modal-mask" bindtap="closeRemarkModal"></view>
+  <view wx:if="{{showRemarkModal}}" class="remark-modal">
+    <view class="remark-header">
+      <text class="remark-title">备注 - {{remarkDate}}</text>
+    </view>
+    <view class="remark-content">
+      <textarea class="remark-input" placeholder="请输入备注内容..." value="{{remarkContent}}" bindinput="onRemarkInput" maxlength="200"></textarea>
+    </view>
+    <view class="remark-buttons">
+      <button class="btn-danger" bindtap="deleteRemark">删除</button>
+      <button class="btn-primary" bindtap="saveRemark">保存</button>
+    </view>
   </view>
 </view>

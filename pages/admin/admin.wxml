@@ -1,0 +1,85 @@
+<view class="admin-container">
+  <!-- 头部月份选择 -->
+  <view class="header-bar">
+    <text class="title">管理员面板</text>
+    <view class="month-selector">
+      <view class="arrow-btn" bindtap="prevMonth">◀</view>
+      <text class="month-text">{{currentMonth}}</text>
+      <view class="arrow-btn" bindtap="nextMonth">▶</view>
+    </view>
+  </view>
+
+  <!-- 员工管理 -->
+  <view class="employee-card">
+    <view class="section-title">员工名单</view>
+    <view class="employee-input-row">
+      <input class="employee-input" placeholder="输入姓名添加员工" value="{{newEmployee}}" bindinput="onNewEmployeeInput" confirm-type="done" bindconfirm="addEmployee" />
+      <view class="add-btn" bindtap="addEmployee">添加</view>
+    </view>
+    <view class="employee-list">
+      <block wx:for="{{employees}}" wx:key="item">
+        <view class="employee-tag">
+          <text class="employee-name">{{item}}</text>
+          <view class="tag-actions">
+            <button class="share-btn mini" open-type="share" data-employee="{{item}}" bindtap="shareEmployee">分享</button>
+            <view class="delete-btn mini" bindtap="deleteEmployee" data-name="{{item}}">删除</view>
+          </view>
+        </view>
+      </block>
+      <view wx:if="{{employees.length === 0}}" class="empty-tip">暂无员工，请添加</view>
+    </view>
+  </view>
+
+  <!-- 排班表 -->
+  <view class="schedule-card">
+    <view class="section-title">排班表</view>
+    <scroll-view scroll-x="true" class="table-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="schedule-table">
+        <!-- 表头 -->
+        <view class="table-header">
+          <view class="cell header-cell name-cell">姓名</view>
+          <block wx:for="{{dateHeaders}}" wx:key="item">
+            <view class="cell header-cell date-cell">
+              <text class="header-day">{{dayHeaders[index]}}</text>
+              <text class="header-weekday">{{weekdayMap[item]}}</text>
+            </view>
+          </block>
+          <view class="cell header-cell action-cell">操作</view>
+        </view>
+
+        <!-- 员工行 -->
+        <block wx:for="{{employees}}" wx:key="item" wx:for-item="emp">
+          <view class="table-row">
+            <view class="cell name-cell">{{emp}}</view>
+            <block wx:for="{{dateHeaders}}" wx:key="item" wx:for-item="date">
+              <view class="cell shift-cell"
+                    data-employee="{{emp}}" data-date="{{date}}" bindtap="editShift">
+                {{getShiftText(emp, date)}}
+              </view>
+            </block>
+            <view class="cell action-cell">
+              <button class="share-icon-btn" open-type="share" data-employee="{{emp}}" bindtap="shareEmployee">📤</button>
+              <view class="delete-icon-btn" bindtap="deleteEmployee" data-name="{{emp}}">🗑️</view>
+            </view>
+          </view>
+        </block>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 班次选择弹窗 -->
+  <view class="popup-mask" wx:if="{{showShiftPopup}}" bindtap="closeShiftPopup"></view>
+  <view class="shift-popup" wx:if="{{showShiftPopup}}">
+    <view class="popup-title">{{currentEditEmployee}} - {{currentEditDate}}</view>
+    <view class="shift-options">
+      <block wx:for="{{shiftTypes}}" wx:key="name">
+        <view class="shift-option" bindtap="selectShift" data-type="{{item.name}}">
+          <view class="color-dot" style="background-color: {{item.color}}"></view>
+          {{item.name}}
+        </view>
+      </block>
+      <view class="shift-option clear" bindtap="selectShift" data-type="__clear__">清除排班</view>
+    </view>
+    <view class="popup-cancel" bindtap="closeShiftPopup">取消</view>
+  </view>
+</view>

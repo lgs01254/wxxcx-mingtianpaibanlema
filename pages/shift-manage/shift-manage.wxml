@@ -1,11 +1,38 @@
-<!--pages/shift-manage/shift-manage.wxml-->
+<!--pages/shift-manage/shift-manage.wxml -->
 <view class="container">
   <view class="shift-list-title">自定义班次管理</view>
+  <view style="margin-bottom:16rpx;">
+    <button class="btn-add" bindtap="openAddShift">新增班制</button>
+  </view>
   <block wx:for="{{customShifts}}" wx:key="name">
     <view class="shift-item">
-      <text class="shift-name">{{item}}</text>
-      <button class="btn-delete" data-name="{{item}}" bindtap="deleteShift">删除</button>
+      <text class="shift-name" bindtap="openEditShift" data-name="{{item.name}}">
+        <text style="display:inline-block;width:20rpx;height:20rpx;background:{{item.color}};border-radius:4rpx;margin-right:12rpx;"></text>
+        {{item.name || item}}
+      </text>
+      <button class="btn-delete" data-name="{{item.name || item}}" bindtap="deleteShift">删除</button>
     </view>
   </block>
   <view wx:if="!customShifts.length" class="empty-tip">暂无自定义班次</view>
+
+  <!-- 新增/编辑班制弹窗（复用备注弹窗样式） -->
+  <view wx:if="{{showShiftModal}}" class="remark-modal-mask" bindtap="closeShiftModal"></view>
+  <view wx:if="{{showShiftModal}}" class="remark-modal" style="top: 50%; transform: translate(-50%, -50%);">
+    <view class="remark-header">
+      <text class="remark-title">{{editingName ? '编辑班制' : '新增班制'}}</text>
+    </view>
+    <view class="remark-content">
+      <input class="remark-input" placeholder="请输入班制名称" value="{{formName}}" bindinput="onShiftNameInput" />
+      <view style="margin-top:16rpx;">选择颜色：</view>
+      <view class="color-row">
+        <block wx:for="{{['#007AFF','#4CAF50','#FF9800','#FF4757','#9C27B0','#00BCD4','#8BC34A','#795548']}}" wx:key="*this">
+          <view class="color-dot {{formColor===item?'active':''}}" data-color="{{item}}" bindtap="onPickColor" style="background:{{item}};"></view>
+        </block>
+      </view>
+    </view>
+    <view class="remark-buttons">
+      <button class="btn-danger" bindtap="closeShiftModal">取消</button>
+      <button class="btn-primary" bindtap="saveShift">保存</button>
+    </view>
+  </view>
 </view>

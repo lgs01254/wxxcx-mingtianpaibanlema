@@ -20,6 +20,7 @@ Page({
       success: (res) => {
         if (res.confirm) {
           wx.removeStorageSync('schedules')
+          
           wx.showToast({
             title: '排班数据已清除',
             icon: 'success',
@@ -28,5 +29,8 @@ Page({
         }
       }
     })
+  },
+  goAdminPanel: function () {
+    wx.navigateTo({ url: '/pages/admin/admin' })
   }
 })

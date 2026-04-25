@@ -11,4 +11,10 @@
   <view class="setting-item">
     <button bindtap="clearSchedules">清除所有排班数据</button>
   </view>
+  <view class="setting-item">
+    <button bindtap="syncData">同步数据到云端</button>
+  </view>
+  <view class="setting-item">
+    <button bindtap="goAdminPanel">管理员面板</button>
+  </view>
 </view>

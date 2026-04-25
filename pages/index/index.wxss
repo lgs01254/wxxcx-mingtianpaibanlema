@@ -5,6 +5,27 @@
   min-height: 100vh;
   box-sizing: border-box;
 }
+.employee-title {
+  text-align: center;
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  color: #007AFF;
+}
+.settings-btn {
+  position: fixed;
+  top: 20rpx;
+  left: 20rpx;
+  width: 60rpx;
+  height: 60rpx;
+  background-color: #f0f0f0;
+  border-radius: 30rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9998;
+  font-size: 30rpx;
+}
 .weather-bar {
   width: 100%;
   display: flex;
@@ -29,21 +50,146 @@
 }
 .day-card {
   flex: 1;
-  margin: 0 24rpx;
+  margin: 0 auto;
   background: linear-gradient(135deg, #7fbcff 0%, #a6e3ff 100%);
   border-radius: 32rpx;
   box-shadow: 0 6rpx 24rpx rgba(0,122,255,0.10);
   display: flex;
+  flex-direction: row; /* 改为水平布局 */
+  align-items: stretch; /* 让子元素拉伸到相同高度 */
+  justify-content: space-between; /* 三个区域平均分布 */
+  padding: 0; /* 移除内边距，让子元素控制 */
+  position: relative;
+  min-height: 343rpx; /* 设置最小高度 */
+  width: 700rpx; /* 更贴合小程序屏宽，避免视觉偏移 */
+  box-sizing: border-box;
+}
+
+/* 左边空白预留区域 */
+.left-blank-area {
+  flex: 1; /* 占用1份空间 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx;
+}
+
+/* 天气模块样式 */
+.weather-module {
+  display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 48rpx 0 36rpx 0;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* 实时天气样式（当天） */
+.realtime-weather {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.realtime-temp {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  text-shadow: 1rpx 1rpx 4rpx rgba(255, 255, 255, 0.8);
+}
+
+.weather-emoji {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.weather-range {
+  margin-bottom: 8rpx;
+}
+
+.temp-range {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+.weather-desc {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+
+.location {
+  font-size: 22rpx;
+  color: #888;
+  font-weight: 400;
+}
+
+/* 预报天气样式（明天及之后） */
+.forecast-weather {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.forecast-temp {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  text-shadow: 1rpx 1rpx 4rpx rgba(255, 255, 255, 0.8);
+}
+
+/* 城市编辑提示样式 */
+.city-edit-hint {
+  margin-top: 12rpx;
+  opacity: 0.7;
+}
+
+.hint-text {
+  font-size: 18rpx;
+  color: #999;
+  font-weight: 400;
+}
+
+/* 中间排班信息区域 */
+.center-schedule-area {
+  flex: 2; /* 占用2份空间 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%; /* 确保高度占满 */
+  padding: 20rpx;
+}
+
+/* 右边备注显示区域 */
+.right-remark-area {
+  flex: 1; /* 占用1份空间 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
+  height: 100%; /* 确保高度占满 */
+  padding: 20rpx;
+  min-width: 0; /* 允许收缩 */
 }
 .today-card {
   background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  /* 继承day-card的布局设置，不需要重复定义 */
 }
 .tomorrow-card {
   background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+  /* 继承day-card的布局设置，不需要重复定义 */
 }
 .tomorrow-weather {
   margin-top: 12rpx;
@@ -89,6 +235,32 @@
 .schedule-badge.zaoban {
   background: #007AFF;
 }
+
+/* 备注显示区域样式 */
+.remark-display-area {
+  padding: 16rpx 24rpx; /* 减小内边距 */
+  background: rgba(255, 255, 255, 0.15); /* 稍微加深背景 */
+  border-radius: 20rpx;
+  max-width: 100%;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  text-align: center;
+  word-wrap: break-word; /* 确保长文本能正确换行 */
+}
+
+.remark-text {
+  font-size: 32rpx; /* 调整字体大小 */
+  color: #333;
+  line-height: 1.4;
+  text-align: center;
+  word-break: break-all;
+  display: block;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: pre-wrap;
+  word-spacing: 0;
+  letter-spacing: 0;
+}
 .calendar-section {
   background: #fff;
   border-radius: 24rpx;
@@ -126,13 +298,39 @@
   width: 100%;
   box-sizing: border-box;
 }
+.calendar-dual {
+  overflow: hidden;
+  width: 100%;
+}
+.calendar-track {
+  display: flex;
+  flex-direction: row;
+  width: 200%;
+}
+.calendar-track .panel {
+  width: 50%;
+}
+.calendar-animate-enter {
+  animation: calSlideIn 220ms ease-out;
+}
+.calendar-animate-leave {
+  animation: calSlideOut 220ms ease-in;
+}
+@keyframes calSlideIn {
+  from { transform: translateX(var(--fromX, 0)); opacity: 0.8; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes calSlideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(var(--toX, 0)); opacity: 0.8; }
+}
 .day-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   min-height: 80rpx;
-  background: #f5f7fa;
+  background: #ffffff !important;
   border-radius: 16rpx;
   padding: 8rpx 0 0 0;
   position: relative;
@@ -140,11 +338,15 @@
 }
 .day-item[style*='border'] {
   box-shadow: 0 0 0 2rpx #ff9800;
-  background: #fffbe6;
+  /* 移除背景颜色设置，让其他规则生效 */
 }
 .day-item.xiuxi {
-  background: #8fd8a5;
+  background: #8fd8a5 !important;
   /* 更深的绿色底纹 */
+}
+.day-item.jia {
+  background: #fff3cd !important;
+  /* 黄色底纹，类似休息的绿色底纹 */
 }
 .day-num {
   font-size: 28rpx;
@@ -195,11 +397,191 @@ button {
   height: 340rpx;
   margin-bottom: 40rpx;
 }
-.top-swiper .swiper-item,
-.top-swiper .day-card {
+
+.top-swiper .swiper-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 320rpx;
 }
+.month-switch-btn {
+  min-width: 48rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  font-size: 36rpx;
+  color: #007aff;
+  background: #f4f8fb;
+  border-radius: 50%;
+  border: none;
+  margin: 0 4rpx;
+  padding: 0;
+}
+.month-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+.month-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+.type-popup-mask {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.01);
+  z-index: 1000;
+}
+.type-popup {
+  position: fixed;
+  z-index: 1001;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.18);
+  padding: 12rpx 0;
+  min-width: 120rpx;
+}
+.type-popup-item {
+  padding: 18rpx 36rpx;
+  font-size: 30rpx;
+  color: #333;
+  text-align: center;
+}
+.type-popup-item:active {
+  background: #f0f0f0;
+}
+.lunar-text {
+  font-size: 20rpx;
+  color: #bfa96c;
+  margin-top: 2rpx;
+  margin-bottom: 2rpx;
+  line-height: 1.1;
+  text-align: center;
+  min-height: 24rpx;
+  font-family: 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+}
+.btn-narrow {
+  min-width: 120rpx;
+  max-width: 160rpx;
+  padding: 0 12rpx;
+}
+.btn-share {
+  min-width: 120rpx;
+  max-width: 160rpx;
+  padding: 0 12rpx;
+  background: #4caf50;
+  color: #fff;
+  margin-left: 16rpx;
+  border-radius: 30rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  box-shadow: 0 2rpx 8rpx rgba(0,122,255,0.10);
+}
+/* 备注弹窗样式 */
+.remark-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.remark-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 600rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  transition: top 0.3s ease;
+}
+
+.remark-header {
+  padding: 32rpx 32rpx 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+  text-align: center;
+}
+
+.remark-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.remark-content {
+  padding: 24rpx 32rpx;
+}
+
+.remark-input {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #333;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+
+.remark-input:focus {
+  border-color: #007AFF;
+  background: #fff;
+}
+
+.remark-buttons {
+  display: flex;
+  gap: 24rpx;
+  padding: 24rpx 32rpx 32rpx;
+  border-top: 2rpx solid #f0f0f0;
+}
+
+.remark-buttons button {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  border: none;
+}
+
+.btn-danger {
+  background: #ff4757;
+  color: #fff;
+}
+
+.btn-danger:active {
+  background: #ff3742;
+}
+
+.btn-primary {
+  background: #007AFF;
+  color: #fff;
+}
+
+.btn-primary:active {
+  background: #0056CC;
+}
+/* 备注角标样式 */
+.remark-badge {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 16rpx;
+  height: 16rpx;
+  background: #4CAF50;
+  border-radius: 50%;
+  border: 2rpx solid #fff;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
+}
+
+
