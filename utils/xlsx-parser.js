@@ -169,11 +169,14 @@ function analyzeHeaders(headers) {
   let dateStartIndex = 1  // 默认第二列开始
   const dateHeaders = []
   
+  console.log('分析表头:', headers)
+  
   // 查找姓名列
   for (let i = 0; i < Math.min(5, headers.length); i++) {
     const header = String(headers[i]).trim()
     if (header.includes('姓名') || header.includes('名字') || header.includes('人员')) {
       nameColumnIndex = i
+      console.log(`找到姓名列在索引 ${i}: ${header}`)
       break
     }
   }
@@ -184,20 +187,46 @@ function analyzeHeaders(headers) {
   for (let i = 0; i < headers.length; i++) {
     const header = String(headers[i]).trim()
     
+    console.log(`检查第${i}列: '${header}'`)
+    
     // 如果找到"1"开始的日期，标记开始
     if (!startFound && /^1$/.test(header)) {
       startFound = true
       dateStartIndex = i
+      console.log(`找到日期起始列在索引 ${i}`)
     }
     
     // 收集日期列
     if (startFound && isValidDateHeader(header)) {
       dateHeaders.push(header)
+      console.log(`添加日期: '${header}'`)
     }
     
     // 如果遇到"早班"、"中班"等班次统计列，停止
     if (header.includes('班') && !/^\d+$/.test(header)) {
+      console.log(`遇到班次统计列，停止: ${header}`)
       break
+    }
+  }
+  
+  // 如果没有找到日期列，尝试备用方案：查找连续的数字列
+  if (dateHeaders.length === 0) {
+    console.log('未找到日期列，尝试备用方案')
+    for (let i = 0; i < headers.length; i++) {
+      const header = String(headers[i]).trim()
+      if (/^\d{1,2}$/.test(header)) {
+        const num = parseInt(header)
+        if (num >= 1 && num <= 31) {
+          if (dateHeaders.length === 0 || parseInt(dateHeaders[dateHeaders.length - 1]) + 1 === num) {
+            dateHeaders.push(header)
+            if (dateHeaders.length === 1) {
+              dateStartIndex = i
+              console.log(`备用方案：找到日期起始列在索引 ${i}`)
+            }
+            console.log(`备用方案添加日期: '${header}'`)
+          }
+        }
+      }
     }
   }
   
