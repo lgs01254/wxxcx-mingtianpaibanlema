@@ -53,14 +53,8 @@ function parseExcelData(excelData) {
     return null
   }
   
-  // 解析日期表头
-  const dateHeaders = []
-  for (let i = 1; i < headers.length; i++) {
-    const header = String(headers[i]).trim()
-    if (isValidDateHeader(header)) {
-      dateHeaders.push(header)
-    }
-  }
+  // 查找姓名列和日期列的起始位置
+  const { nameColumnIndex, dateStartIndex, dateHeaders } = analyzeHeaders(headers)
   
   if (dateHeaders.length === 0) {
     return null
@@ -69,26 +63,54 @@ function parseExcelData(excelData) {
   // 解析员工和排班数据
   const employees = []
   const schedules = {}
+  const currentYearMonth = getCurrentYearMonth()
   
   for (let i = 1; i < excelData.length; i++) {
     const row = excelData[i]
-    if (!row || !row[0]) continue
+    if (!row || row.length < dateStartIndex + 1) continue
     
-    // 识别员工姓名（只识别汉字）
-    const employeeName = extractChineseName(String(row[0]))
-    if (!employeeName) continue
+    // 获取姓名（从指定列）
+    const nameValue = row[nameColumnIndex]
+    const employeeName = extractChineseName(String(nameValue))
+    
+    // 如果没有识别到姓名，跳过该行
+    if (!employeeName) {
+      // 检查是否是汇总行
+      if (isSummaryRow(row)) {
+        continue
+      }
+      // 尝试从第一列提取姓名
+      const altName = extractChineseName(String(row[0]))
+      if (!altName) continue
+      employeeName = altName
+    }
+    
+    // 跳过重复员工
+    if (employees.includes(employeeName)) {
+      continue
+    }
     
     employees.push(employeeName)
     schedules[employeeName] = {}
     
+    // 获取排班年月（从第三列）
+    let yearMonth = currentYearMonth
+    if (row[2]) {
+      const ym = String(row[2]).trim()
+      if (ym.match(/^\d{4}-\d{1,2}$/)) {
+        yearMonth = ym
+      }
+    }
+    
     // 解析该行的排班数据
     let dateIndex = 0
-    for (let j = 1; j < row.length && dateIndex < dateHeaders.length; j++) {
+    for (let j = dateStartIndex; j < row.length && dateIndex < dateHeaders.length; j++) {
       const shiftText = String(row[j] || '').trim()
       if (dateHeaders[dateIndex]) {
         const normalizedShift = normalizeShiftName(shiftText)
         if (normalizedShift) {
-          schedules[employeeName][dateHeaders[dateIndex]] = normalizedShift
+          const fullDate = formatDate(yearMonth, dateHeaders[dateIndex])
+          schedules[employeeName][fullDate] = normalizedShift
         }
       }
       dateIndex++
@@ -104,6 +126,76 @@ function parseExcelData(excelData) {
     schedules,
     shiftTypes: ['早班', '休息', '中班', '晚班']
   }
+}
+
+// 分析表头结构
+function analyzeHeaders(headers) {
+  let nameColumnIndex = 0 // 默认第一列
+  let dateStartIndex = 1  // 默认第二列开始
+  const dateHeaders = []
+  
+  // 查找姓名列
+  for (let i = 0; i < Math.min(5, headers.length); i++) {
+    const header = String(headers[i]).trim()
+    if (header.includes('姓名') || header.includes('名字') || header.includes('人员')) {
+      nameColumnIndex = i
+      break
+    }
+  }
+  
+  // 查找日期列开始位置
+  // 跳过前几列（人员工号、姓名、排班年月等）
+  let startFound = false
+  for (let i = 0; i < headers.length; i++) {
+    const header = String(headers[i]).trim()
+    
+    // 如果找到"1"开始的日期，标记开始
+    if (!startFound && /^1$/.test(header)) {
+      startFound = true
+      dateStartIndex = i
+    }
+    
+    // 收集日期列
+    if (startFound && isValidDateHeader(header)) {
+      dateHeaders.push(header)
+    }
+    
+    // 如果遇到"早班"、"中班"等班次统计列，停止
+    if (header.includes('班') && !/^\d+$/.test(header)) {
+      break
+    }
+  }
+  
+  return { nameColumnIndex, dateStartIndex, dateHeaders }
+}
+
+// 检查是否是汇总行
+function isSummaryRow(row) {
+  if (!row || row.length === 0) return true
+  
+  const firstValue = String(row[0]).trim()
+  const secondValue = row[1] ? String(row[1]).trim() : ''
+  
+  // 检查是否是汇总行标记
+  const summaryMarkers = ['合计', '总计', '早', '中', '晚', '休息', 'empty']
+  return summaryMarkers.some(marker => firstValue.includes(marker) || secondValue.includes(marker))
+}
+
+// 获取当前年月
+function getCurrentYearMonth() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
+}
+
+// 格式化日期
+function formatDate(yearMonth, day) {
+  const parts = yearMonth.split('-')
+  const year = parts[0]
+  const month = String(parts[1]).padStart(2, '0')
+  const dayPadded = String(day).padStart(2, '0')
+  return `${year}-${month}-${dayPadded}`
 }
 
 // 提取汉字姓名（只保留汉字）
@@ -145,13 +237,17 @@ function normalizeShiftName(text) {
   
   const t = text.trim()
   
+  // 检查是否是数字（统计数据），跳过
+  if (/^\d+$/.test(t)) return null
+  
   // 早班识别
   if (t === '早' || t === '早班' || t === '早班8H' || t === '8H') return '早班'
   if (t.match(/^8[Hh]$/) || t.match(/^8小时$/)) return '早班'
   
-  // 中班识别
+  // 中班识别（包括"8H中"格式）
   if (t === '中' || t === '中班') return '中班'
   if (t.match(/^中[班]?$/) || t.match(/^16[Hh]$/)) return '中班'
+  if (t.includes('8H') && t.includes('中')) return '中班'
   
   // 晚班识别
   if (t === '晚' || t === '晚班') return '晚班'
