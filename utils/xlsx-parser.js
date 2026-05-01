@@ -17,8 +17,15 @@ function parseExcel(filePath) {
           // 使用xlsx解析
           const workbook = XLSX.read(data, { type: 'array' })
           
-          // 获取第一个工作表
-          const sheetName = workbook.SheetNames[0]
+          // 获取第一个可见的工作表
+          const sheetName = getFirstVisibleSheet(workbook)
+          console.log('选择的工作表:', sheetName)
+          
+          if (!sheetName) {
+            reject(new Error('未找到可见的工作表'))
+            return
+          }
+          
           const worksheet = workbook.Sheets[sheetName]
           
           // 转换为JSON
@@ -39,6 +46,26 @@ function parseExcel(filePath) {
       }
     })
   })
+}
+
+// 获取第一个可见的工作表
+function getFirstVisibleSheet(workbook) {
+  // 遍历所有工作表，找到第一个可见的
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName]
+    const sheetState = sheet['!scope'] ? sheet['!scope'].state : 'visible'
+    
+    // visible表示可见，hidden表示隐藏，veryHidden表示超隐藏
+    if (sheetState !== 'hidden' && sheetState !== 'veryHidden') {
+      console.log(`工作表 ${sheetName} 状态: ${sheetState}`)
+      return sheetName
+    }
+    console.log(`工作表 ${sheetName} 已隐藏，跳过`)
+  }
+  
+  // 如果都隐藏了，返回第一个
+  console.log('所有工作表都隐藏，使用第一个:', workbook.SheetNames[0])
+  return workbook.SheetNames[0]
 }
 
 // 解析Excel数据为排班格式
