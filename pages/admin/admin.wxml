@@ -15,7 +15,12 @@
       </block>
       <view wx:if="{{employees.length === 0}}" class="empty-tip">暂无员工，请添加</view>
     </view>
-    <button class="share-all-btn" open-type="share" data-all="true">分享全部员工排班</button>
+    <view class="action-buttons">
+      <button class="excel-import-btn" bindtap="selectExcelFile" disabled="{{isParsingExcel}}">
+        📊 导入Excel排班
+      </button>
+      <button class="share-all-btn" open-type="share" data-all="true">分享全部员工排班</button>
+    </view>
   </view>
 
   <!-- 排班表 -->

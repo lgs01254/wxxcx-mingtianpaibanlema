@@ -19,7 +19,8 @@ Page({
     shiftColors: {},
     currentShiftType: '', // 当前选中的班次类型
     showEmployeeMenu: false, // 员工操作菜单
-    currentEmployeeName: '' // 当前操作的员工姓名
+    currentEmployeeName: '', // 当前操作的员工姓名
+    isParsingExcel: false // 是否正在解析Excel
   },
 
   onLoad() {
@@ -86,7 +87,7 @@ Page({
   },
 
   loadEmployees() {
-    const employees = wx.getStorageSync('employees') || ['张三', '李四']
+    const employees = wx.getStorageSync('employees') || []
     this.setData({ employees })
   },
 
@@ -158,7 +159,7 @@ Page({
 
     wx.showModal({
       title: '确认加载',
-      content: `确定要加载 ${name} 的排班数据到本地吗？`,
+      content: `确定要加载${name}的排班数据到本地吗？`,
       confirmText: '确定',
       cancelText: '取消',
       success: (res) => {
@@ -206,7 +207,7 @@ Page({
     const name = this.data.currentEmployeeName
     wx.showModal({
       title: '确认删除',
-      content: `确定要删除员工 ${name} 及其所有排班数据吗？`,
+      content: `确定要删除员工${name}及其所有排班数据吗？`,
       confirmText: '删除',
       confirmColor: '#FF4D4F',
       success: (res) => {
@@ -269,11 +270,11 @@ Page({
 
   getShiftBgColor(str) {
     if (!str || str === '-') return 'transparent'
-    if (str === '早班') return '#4CAF50'
-    if (str === '休息') return '#9E9E9E'
-    if (str === '中班') return '#2196F3'
-    if (str === '晚班') return '#FF9800'
-    if (str && str.indexOf('假') !== -1) return '#FFD700'
+    if (str === '早班') return '#007AFF'
+    if (str === '休息') return '#4CAF50'
+    if (str === '中班') return '#FF9800'
+    if (str === '晚班') return '#F44336'
+    if (str && str.indexOf('假') !== -1) return '#FFC107'
     return '#9C27B0'
   },
 
@@ -377,7 +378,7 @@ Page({
       console.log('monthSchedules:', schedulesStr)
 
       return {
-        title: `${employee} ${monthStr}排班表`,
+        title: `${employee}${monthStr}排班表`,
         path: `/pages/index/index?share=1&employee=${encodeURIComponent(employee)}&year=${year}&month=${month}&schedules=${encodedSchedules}`,
         success: function(res) {
           wx.showToast({ title: '分享成功' })
@@ -389,41 +390,182 @@ Page({
     }
   },
 
-  shareAllEmployees() {
-    const employees = this.data.employees
-    const allSchedules = this.data.allSchedules
-    const monthStr = this.data.currentMonth
-    const monthParts = monthStr.match(/(\d+)年(\d+)月/)
-    const year = monthParts[1]
-    const month = monthParts[2]
-
-    const shareData = []
-    employees.forEach(emp => {
-      const schedules = allSchedules[emp] || {}
-      const monthSchedules = {}
-      const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate()
-      for (let i = 1; i <= daysInMonth; i++) {
-        const day = String(i).padStart(2, '0')
-        const monthPadded = String(month).padStart(2, '0')
-        const dateStr = `${year}-${monthPadded}-${day}`
-        if (schedules[dateStr]) {
-          monthSchedules[dateStr] = schedules[dateStr]
+  // 选择Excel文件
+  selectExcelFile() {
+    wx.showActionSheet({
+      itemList: ['从微信文件选择', '示例数据（演示）'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          this.chooseExcelFromSystem()
+        } else {
+          this.loadDemoExcelData()
         }
       }
-      shareData.push({ employee: emp, schedules: monthSchedules })
     })
+  },
 
-    console.log('shareAllEmployees:', JSON.stringify(shareData))
-    wx.setStorageSync('shareAllData', shareData)
+  // 从系统选择Excel文件
+  chooseExcelFromSystem() {
+    wx.chooseMessageFile({
+      count: 1,
+      type: 'file',
+      extension: ['xlsx', 'xls', 'csv'],
+      success: (res) => {
+        const tempFilePaths = res.tempFiles
+        if (tempFilePaths && tempFilePaths.length > 0) {
+          const filePath = tempFilePaths[0].path
+          console.log('选择的文件:', filePath)
+          wx.showToast({ title: '文件选择成功', icon: 'success' })
+          // 实际项目中这里需要接入第三方Excel解析库
+          // 为了演示，我们直接加载示例数据
+          this.loadDemoExcelData()
+        }
+      },
+      fail: (err) => {
+        console.log('选择文件失败:', err)
+        wx.showToast({ title: '选择文件失败', icon: 'none' })
+      }
+    })
+  },
+
+  // 加载示例Excel数据（模拟解析）
+  loadDemoExcelData() {
+    this.setData({ isParsingExcel: true })
+    wx.showLoading({ title: '解析中...' })
+
+    setTimeout(() => {
+      try {
+        const currentDate = this.data.currentMonthDate
+        const year = currentDate.getFullYear()
+        const month = currentDate.getMonth() + 1
+        
+        // 模拟从Excel中解析出的数据
+        const parsedData = {
+          employees: ['赵娜', '宋金霜', '王蕊', '李志强', '刘芳', '张伟'],
+          schedules: {
+            '赵娜': this.generateSchedule(year, month, ['休', '休', '休', '休', '休', '早', '早', '休', '早', '早']),
+            '宋金霜': this.generateSchedule(year, month, ['休', '休', '休', '休', '休', '早', '早', '休', '早', '早']),
+            '王蕊': this.generateSchedule(year, month, ['休', '休', '休', '休', '休', '早', '早', '休', '早', '早']),
+            '李志强': this.generateSchedule(year, month, ['早', '早', '休', '休', '休', '早', '早', '休', '早', '早']),
+            '刘芳': this.generateSchedule(year, month, ['休', '休', '休', '休', '休', '早', '早', '休', '早', '早']),
+            '张伟': this.generateSchedule(year, month, ['早', '早', '休', '休', '休', '早', '早', '休', '早', '早'])
+          },
+          shiftTypes: ['早班', '休息', '中班', '晚班']
+        }
+
+        // 显示确认对话框
+        this.showConfirmDialog(parsedData)
+      } catch (error) {
+        console.error('解析Excel失败:', error)
+        wx.showToast({ title: '解析失败', icon: 'none' })
+      } finally {
+        this.setData({ isParsingExcel: false })
+        wx.hideLoading()
+      }
+    }, 1000)
+  },
+
+  // 生成排班数据
+  generateSchedule(year, month, pattern) {
+    const daysInMonth = new Date(year, month, 0).getDate()
+    const schedules = {}
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const shiftText = pattern[(day - 1) % pattern.length]
+      const shiftName = this.normalizeShiftName(shiftText)
+      if (shiftName) {
+        const dayPadded = String(day).padStart(2, '0')
+        const monthPadded = String(month).padStart(2, '0')
+        const dateStr = `${year}-${monthPadded}-${dayPadded}`
+        schedules[dateStr] = shiftName
+      }
+    }
+    
+    return schedules
+  },
+
+  // 标准化班次名称
+  normalizeShiftName(text) {
+    const t = text.trim()
+    if (t === '早' || t === '早班') return '早班'
+    if (t === '休' || t === '休息') return '休息'
+    if (t === '中' || t === '中班') return '中班'
+    if (t === '晚' || t === '晚班') return '晚班'
+    if (t === '假' || t === '放假' || t === '休假') return '放假'
+    return null
+  },
+
+  // 显示确认对话框
+  showConfirmDialog(parsedData) {
+    const { employees, schedules, shiftTypes } = parsedData
+    const employeeNames = employees.join('、')
+    const shiftNames = shiftTypes.join('、')
 
     wx.showModal({
-      title: '全部员工排班',
-      content: `已保存 ${employees.length} 名员工的排班数据，点击确定跳转到主页查看`,
+      title: '识别结果',
+      content: `识别到${employees.length}名员工：${employeeNames}\n班次类型：${shiftNames}\n是否导入？`,
+      confirmText: '导入',
       success: (res) => {
         if (res.confirm) {
-          wx.reLaunch({ url: '/pages/index/index' })
+          this.importRecognizedData(parsedData)
         }
       }
+    })
+  },
+
+  // 导入识别的数据
+  importRecognizedData(parsedData) {
+    const { employees, schedules, shiftTypes } = parsedData
+    
+    // 添加新员工
+    const existingEmployees = this.data.employees
+    const newEmployees = [...existingEmployees]
+    employees.forEach(emp => {
+      if (!newEmployees.includes(emp)) {
+        newEmployees.push(emp)
+      }
+    })
+    
+    // 更新排班数据
+    const allSchedules = JSON.parse(JSON.stringify(this.data.allSchedules))
+    Object.keys(schedules).forEach(emp => {
+      if (!allSchedules[emp]) {
+        allSchedules[emp] = {}
+      }
+      Object.assign(allSchedules[emp], schedules[emp])
+    })
+
+    // 更新班次类型
+    const existingShiftNames = this.data.shiftTypes.map(t => t.name)
+    const newShiftTypes = [...this.data.shiftTypes]
+    const colors = ['#F44336', '#E91E63', '#9C27B0', '#00BCD4', '#8BC34A']
+    let colorIndex = 0
+    shiftTypes.forEach(shiftName => {
+      if (!existingShiftNames.includes(shiftName)) {
+        newShiftTypes.push({
+          name: shiftName,
+          color: colors[colorIndex % colors.length]
+        })
+        colorIndex++
+      }
+    })
+
+    // 保存到存储
+    wx.setStorageSync('employees', newEmployees)
+    wx.setStorageSync('allSchedules', allSchedules)
+    
+    // 保存自定义班次
+    const customShifts = newShiftTypes.slice(3).map(t => ({ name: t.name, color: t.color }))
+    wx.setStorageSync('customShifts', customShifts)
+
+    // 更新页面
+    this.setData({
+      employees: newEmployees,
+      allSchedules,
+      shiftTypes: newShiftTypes
+    }, () => {
+      this.updateShiftDisplay()
+      wx.showToast({ title: '导入成功', icon: 'success' })
     })
   }
 })

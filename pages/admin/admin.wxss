@@ -198,15 +198,6 @@
   text-align: center;
   padding: 40rpx;
 }
-.share-all-btn {
-  background: #007AFF;
-  color: #fff;
-  border-radius: 40rpx;
-  padding: 20rpx;
-  text-align: center;
-  margin-top: 20rpx;
-  font-size: 28rpx;
-}
 
 /* ========== 表格核心布局 ========== */
 .table-container {
@@ -474,4 +465,43 @@
   font-size: 28rpx;
   padding-top: 20rpx;
   border-top: 1rpx solid #eee;
+}
+
+/* 操作按钮区域 */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 30rpx;
+}
+
+.excel-import-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+  color: #fff;
+  border-radius: 40rpx;
+  padding: 24rpx;
+  text-align: center;
+  font-size: 28rpx;
+  border: none;
+  box-shadow: 0 4rpx 16rpx rgba(76, 175, 80, 0.3);
+}
+
+.excel-import-btn:active {
+  opacity: 0.8;
+}
+
+.excel-import-btn[disabled] {
+  opacity: 0.6;
+  background: linear-gradient(135deg, #999 0%, #aaa 100%);
+}
+
+.share-all-btn {
+  background: #007AFF;
+  color: #fff;
+  border-radius: 40rpx;
+  padding: 20rpx;
+  text-align: center;
+  font-size: 28rpx;
+  border: none;
+  margin-top: 0;
 }
