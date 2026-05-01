@@ -21,7 +21,9 @@ Page({
     currentShiftType: '', // 当前选中的班次类型
     showEmployeeMenu: false, // 员工操作菜单
     currentEmployeeName: '', // 当前操作的员工姓名
-    isParsingExcel: false // 是否正在解析Excel
+    isParsingExcel: false, // 是否正在解析Excel
+    currentExcelFilePath: '', // 当前Excel文件路径
+    currentExcelFileName: '' // 当前Excel文件名
   },
 
   onLoad() {
@@ -636,19 +638,31 @@ Page({
   processExcelFile(filePath, fileName) {
     wx.showLoading({ title: '正在解析Excel...' })
     
-    xlsxParser.parseExcel(filePath)
-      .then((excelData) => {
-        console.log('Excel解析成功:', excelData)
+    xlsxParser.readExcelWithSheets(filePath)
+      .then(({ workbook, sheetList }) => {
+        console.log('Excel解析成功，工作表列表:', sheetList)
+        wx.hideLoading()
         
-        // 解析Excel数据为排班格式
-        const parsedData = xlsxParser.parseExcelData(excelData)
+        // 保存文件信息
+        this.setData({
+          currentExcelFilePath: filePath,
+          currentExcelFileName: fileName
+        })
         
-        if (parsedData && parsedData.employees && parsedData.employees.length > 0) {
-          wx.hideLoading()
-          this.showConfirmDialog(parsedData)
+        // 如果只有一个可见工作表，直接解析
+        const visibleSheets = sheetList.filter(s => s.isVisible)
+        
+        if (visibleSheets.length === 0) {
+          wx.showToast({ title: '没有可见的工作表', icon: 'none' })
+          return
+        }
+        
+        if (visibleSheets.length === 1) {
+          // 只有一个可见工作表，直接解析
+          this.parseExcelSheet(workbook, visibleSheets[0].name, fileName)
         } else {
-          wx.hideLoading()
-          wx.showToast({ title: '未能识别到有效数据', icon: 'none' })
+          // 多个工作表，让用户选择
+          this.showSheetSelector(sheetList, workbook, fileName)
         }
       })
       .catch((error) => {
@@ -661,6 +675,54 @@ Page({
           confirmText: '知道了'
         })
       })
+  },
+
+  // 显示工作表选择器
+  showSheetSelector(sheetList, workbook, fileName) {
+    const visibleSheets = sheetList.filter(s => s.isVisible)
+    const sheetNames = visibleSheets.map(s => s.name)
+    
+    wx.showActionSheet({
+      itemList: sheetNames,
+      success: (res) => {
+        const selectedSheet = visibleSheets[res.tapIndex]
+        console.log('选择的工作表:', selectedSheet)
+        this.parseExcelSheet(workbook, selectedSheet.name, fileName)
+      },
+      fail: (err) => {
+        console.error('选择工作表失败:', err)
+      }
+    })
+  },
+
+  // 解析指定工作表
+  parseExcelSheet(workbook, sheetName, fileName) {
+    wx.showLoading({ title: '正在解析工作表...' })
+    
+    try {
+      const excelData = xlsxParser.readSheetData(workbook, sheetName)
+      console.log(`工作表 ${sheetName} 解析成功，数据:`, excelData)
+      
+      // 解析Excel数据为排班格式
+      const parsedData = xlsxParser.parseExcelData(excelData)
+      
+      if (parsedData && parsedData.employees && parsedData.employees.length > 0) {
+        wx.hideLoading()
+        this.showConfirmDialog(parsedData)
+      } else {
+        wx.hideLoading()
+        wx.showToast({ title: '未能识别到有效数据', icon: 'none' })
+      }
+    } catch (error) {
+      console.error('解析工作表失败:', error)
+      wx.hideLoading()
+      wx.showModal({
+        title: '解析失败',
+        content: `工作表: ${sheetName}\n\n解析工作表时发生错误`,
+        showCancel: false,
+        confirmText: '知道了'
+      })
+    }
   },
 
   // 标准化班次名称

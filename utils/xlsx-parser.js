@@ -48,6 +48,46 @@ function parseExcel(filePath) {
   })
 }
 
+// 读取Excel文件并返回工作表列表
+function readExcelWithSheets(filePath) {
+  return new Promise((resolve, reject) => {
+    wx.getFileSystemManager().readFile({
+      filePath: filePath,
+      success: (res) => {
+        try {
+          // 将Buffer转换为ArrayBuffer
+          const buffer = res.data
+          const data = new Uint8Array(buffer)
+          
+          // 使用xlsx解析
+          const workbook = XLSX.read(data, { type: 'array' })
+          
+          // 获取所有工作表名称列表
+          const sheetList = workbook.SheetNames.map(name => {
+            const sheet = workbook.Sheets[name]
+            const sheetState = sheet['!scope'] ? sheet['!scope'].state : 'visible'
+            return {
+              name: name,
+              state: sheetState,
+              isVisible: sheetState !== 'hidden' && sheetState !== 'veryHidden'
+            }
+          })
+          
+          console.log('工作表列表:', sheetList)
+          resolve({ workbook, sheetList })
+        } catch (error) {
+          console.error('解析Excel失败:', error)
+          reject(error)
+        }
+      },
+      fail: (err) => {
+        console.error('读取文件失败:', err)
+        reject(err)
+      }
+    })
+  })
+}
+
 // 获取第一个可见的工作表
 function getFirstVisibleSheet(workbook) {
   // 遍历所有工作表，找到第一个可见的
@@ -66,6 +106,19 @@ function getFirstVisibleSheet(workbook) {
   // 如果都隐藏了，返回第一个
   console.log('所有工作表都隐藏，使用第一个:', workbook.SheetNames[0])
   return workbook.SheetNames[0]
+}
+
+// 根据工作表名称读取数据
+function readSheetData(workbook, sheetName) {
+  const worksheet = workbook.Sheets[sheetName]
+  
+  // 转换为JSON
+  const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+    header: 1,
+    raw: false
+  })
+  
+  return jsonData
 }
 
 // 解析Excel数据为排班格式
@@ -378,5 +431,7 @@ function normalizeShiftName(text) {
 
 module.exports = {
   parseExcel,
-  parseExcelData
+  parseExcelData,
+  readExcelWithSheets,
+  readSheetData
 }
