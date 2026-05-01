@@ -1,5 +1,6 @@
 // admin.js
 const util = require('../../utils/util')
+const xlsxParser = require('../../utils/xlsx-parser')
 
 Page({
   data: {
@@ -633,14 +634,33 @@ Page({
   
   // 处理Excel文件（xlsx/xls）
   processExcelFile(filePath, fileName) {
-    // 微信小程序环境下，xlsx/xls文件无法直接解析
-    wx.hideLoading()
-    wx.showModal({
-      title: '格式不支持',
-      content: `已选择文件: ${fileName}\n\nExcel格式（.xlsx/.xls）暂不支持直接解析。\n\n请将排班表导出为CSV格式后重试。`,
-      showCancel: false,
-      confirmText: '知道了'
-    })
+    wx.showLoading({ title: '正在解析Excel...' })
+    
+    xlsxParser.parseExcel(filePath)
+      .then((excelData) => {
+        console.log('Excel解析成功:', excelData)
+        
+        // 解析Excel数据为排班格式
+        const parsedData = xlsxParser.parseExcelData(excelData)
+        
+        if (parsedData && parsedData.employees && parsedData.employees.length > 0) {
+          wx.hideLoading()
+          this.showConfirmDialog(parsedData)
+        } else {
+          wx.hideLoading()
+          wx.showToast({ title: '未能识别到有效数据', icon: 'none' })
+        }
+      })
+      .catch((error) => {
+        console.error('解析Excel失败:', error)
+        wx.hideLoading()
+        wx.showModal({
+          title: '解析失败',
+          content: `文件: ${fileName}\n\n解析Excel文件时发生错误，请检查文件格式是否正确。\n\n建议将文件保存为CSV格式后重试。`,
+          showCancel: false,
+          confirmText: '知道了'
+        })
+      })
   },
 
   // 标准化班次名称

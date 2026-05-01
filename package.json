@@ -1,0 +1,18 @@
+{
+  "name": "mingtianpaibanlema",
+  "version": "1.0.0",
+  "description": "明天排版了吗 - 微信小程序排班管理",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
+  "keywords": [
+    "排班",
+    "微信小程序"
+  ],
+  "author": "",
+  "license": "MIT"
+}
