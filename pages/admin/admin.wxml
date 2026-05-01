@@ -8,12 +8,9 @@
     </view>
     <view class="employee-list">
       <block wx:for="{{employees}}" wx:key="item">
-        <view class="employee-tag">
+        <view class="employee-tag" bindtap="showEmployeeMenu" data-name="{{item}}">
           <text class="employee-name">{{item}}</text>
-          <view class="tag-actions">
-            <button class="share-btn mini" open-type="share" data-employee="{{item}}">分享</button>
-            <view class="delete-btn mini" bindtap="deleteEmployee" data-name="{{item}}">删除</view>
-          </view>
+          <text class="employee-arrow">›</text>
         </view>
       </block>
       <view wx:if="{{employees.length === 0}}" class="empty-tip">暂无员工，请添加</view>
@@ -29,49 +26,86 @@
       <text class="month-text">{{currentMonth}}</text>
       <view class="arrow-btn" bindtap="nextMonth">▶</view>
     </view>
-    <scroll-view scroll-x="true" scroll-y="true" class="table-scroll" enhanced show-scrollbar="{{false}}">
-      <view class="schedule-table">
-        <!-- 表头 -->
-        <view class="table-header">
-          <view class="cell header-cell name-cell">姓名</view>
-          <block wx:for="{{dateHeaders}}" wx:key="item">
-            <view class="cell header-cell date-cell">
-              <text class="header-day">{{dayHeaders[index]}}</text>
-              <text class="header-weekday">{{weekdayMap[item]}}</text>
+
+    <!-- 班次选择栏 -->
+    <view class="shift-selector">
+      <view class="shift-selector-title">选择班次：</view>
+      <scroll-view scroll-x="true" class="shift-selector-scroll">
+        <view class="shift-selector-list">
+          <block wx:for="{{shiftTypes}}" wx:key="name">
+            <view class="shift-type-btn {{currentShiftType === item.name ? 'active' : ''}}" 
+                  bindtap="selectShiftType" data-type="{{item.name}}" 
+                  style="border-color: {{currentShiftType === item.name ? item.color : 'transparent'}}">
+              <view class="color-dot" style="background-color: {{item.color}}"></view>
+              {{item.name}}
             </view>
           </block>
+          <view class="shift-type-btn {{currentShiftType === '__clear__' ? 'active' : ''}}" 
+                bindtap="selectShiftType" data-type="__clear__"
+                style="border-color: {{currentShiftType === '__clear__' ? '#f0f0f0' : 'transparent'}}">
+            清除
+          </view>
         </view>
+      </scroll-view>
+    </view>
 
-        <!-- 员工行 -->
-        <block wx:for="{{employees}}" wx:key="item" wx:for-item="emp">
-          <view class="table-row">
-            <view class="cell name-cell">{{emp}}</view>
-            <block wx:for="{{dateHeaders}}" wx:key="item" wx:for-item="date">
-              <view class="cell shift-cell"
-                    data-employee="{{emp}}" data-date="{{date}}" bindtap="editShift"
-                    style="background-color: {{shiftDisplay[emp][date] !== '-' ? shiftColors[emp][date] : ''}}; color: {{shiftDisplay[emp][date] !== '-' ? '#fff' : '#999'}}">
-                {{shiftDisplay[emp][date]}}
+    <view class="table-container">
+      <!-- 左侧固定姓名列 -->
+      <view class="fixed-name-column">
+        <view class="fixed-cell header-cell">姓名</view>
+        <block wx:for="{{employees}}" wx:key="item">
+          <view class="fixed-cell">{{item}}</view>
+        </block>
+      </view>
+      
+      <!-- 右侧可滚动日期列 -->
+      <scroll-view scroll-x="true" scroll-y="true" class="table-scroll" enhanced show-scrollbar="{{false}}">
+        <view class="schedule-table">
+          <!-- 表头 -->
+          <view class="table-header">
+            <block wx:for="{{dateHeaders}}" wx:key="item">
+              <view class="cell header-cell date-cell {{weekendMap[item] ? 'weekend' : ''}}">
+                <text class="header-day">{{dayHeaders[index]}}</text>
+                <text class="header-weekday">{{weekdayMap[item]}}</text>
               </view>
             </block>
           </view>
-        </block>
-      </view>
-    </scroll-view>
+
+          <!-- 员工行 -->
+          <block wx:for="{{employees}}" wx:key="item" wx:for-item="emp">
+            <view class="table-row">
+              <block wx:for="{{dateHeaders}}" wx:key="item" wx:for-item="date">
+                <view class="cell shift-cell {{currentShiftType !== '' ? 'selectable' : ''}} {{weekendMap[date] ? 'weekend' : ''}}"
+                      data-employee="{{emp}}" data-date="{{date}}" bindtap="setShift"
+                      style="background-color: {{shiftDisplay[emp][date] !== '-' ? shiftColors[emp][date] : (weekendMap[date] ? '#fff9e6' : '')}}; color: {{shiftDisplay[emp][date] !== '-' ? '#fff' : '#999'}}">
+                  {{shiftDisplay[emp][date]}}
+                </view>
+              </block>
+            </view>
+          </block>
+        </view>
+      </scroll-view>
+    </view>
   </view>
 
-  <!-- 班次选择弹窗 -->
-  <view class="popup-mask" wx:if="{{showShiftPopup}}" bindtap="closeShiftPopup"></view>
-  <view class="shift-popup" wx:if="{{showShiftPopup}}">
-    <view class="popup-title">{{currentEditEmployee}} - {{currentEditDate}}</view>
-    <view class="shift-options">
-      <block wx:for="{{shiftTypes}}" wx:key="name">
-        <view class="shift-option" bindtap="selectShift" data-type="{{item.name}}">
-          <view class="color-dot" style="background-color: {{item.color}}"></view>
-          {{item.name}}
-        </view>
-      </block>
-      <view class="shift-option clear" bindtap="selectShift" data-type="__clear__">清除排班</view>
+  <!-- 员工操作菜单弹窗 -->
+  <view class="popup-mask" wx:if="{{showEmployeeMenu}}" bindtap="closeEmployeeMenu"></view>
+  <view class="employee-menu-popup" wx:if="{{showEmployeeMenu}}">
+    <view class="menu-title">{{currentEmployeeName}}</view>
+    <view class="menu-list">
+      <button class="menu-item" open-type="share" data-employee="{{currentEmployeeName}}">
+        <text>分享排班</text>
+      </button>
+      <view class="menu-item" bindtap="loadEmployeeToLocal">
+        <text>加载到本地</text>
+      </view>
+      <view class="menu-item" bindtap="editEmployee">
+        <text>编辑姓名</text>
+      </view>
+      <view class="menu-item delete" bindtap="confirmDeleteEmployee">
+        <text>删除员工</text>
+      </view>
     </view>
-    <view class="popup-cancel" bindtap="closeShiftPopup">取消</view>
+    <view class="menu-cancel" bindtap="closeEmployeeMenu">取消</view>
   </view>
 </view>

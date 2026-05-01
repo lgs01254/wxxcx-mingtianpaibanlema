@@ -66,7 +66,13 @@ Page({
     notifications: [], // 通知数据
     unreadCount: 0, // 未读通知数量
     isEmployeeMode: false,   // 是否员工单人模式
-    employeeName: ''          // 员工姓名
+    employeeName: '',          // 员工姓名
+    // 分享全部员工数据
+    showShareSelectPanel: false,  // 是否显示员工选择面板
+    shareSelectData: null,        // 待选择的员工数据
+    shareSelectYear: null,        // 分享数据的年份
+    shareSelectMonth: null,       // 分享数据的月份
+    shareSelectEmployees: []      // 分享数据的员工名单
   },
   onLoad: function (options) {
     // 检查是否为员工单人模式
@@ -89,45 +95,19 @@ Page({
         console.log('allSchedules:', JSON.stringify(allSchedules))
 
         const employeeNames = Object.keys(allSchedules)
-        
+
         if (employeeNames.length === 0) {
           wx.showToast({ title: '暂无员工数据', icon: 'none' })
           return
         }
 
-        // 显示员工列表供选择
-        wx.showActionSheet({
-          itemList: employeeNames,
-          title: `选择要加载的员工（${year}年${month}月排班）`,
-          success: (res) => {
-            const selectedEmployee = employeeNames[res.tapIndex]
-            const schedules = allSchedules[selectedEmployee] || {}
-
-            wx.showModal({
-              title: '加载排班数据',
-              content: `确定要加载 ${selectedEmployee} 的排班数据到本地吗？`,
-              confirmText: '确定',
-              cancelText: '取消',
-              success: (modalRes) => {
-                if (modalRes.confirm) {
-                  // 保存到本地存储
-                  wx.setStorageSync('schedules', schedules)
-                  wx.setStorageSync('isEmployeeMode', true)
-                  wx.setStorageSync('employeeName', selectedEmployee)
-                  
-                  wx.showToast({ title: '加载成功', icon: 'success' })
-                  
-                  // 跳转主页显示
-                  wx.reLaunch({
-                    url: `/pages/index/index?employee=${encodeURIComponent(selectedEmployee)}`
-                  })
-                }
-              }
-            })
-          },
-          fail: () => {
-            wx.showToast({ title: '已取消', icon: 'none' })
-          }
+        // 显示员工选择面板
+        this.setData({
+          showShareSelectPanel: true,
+          shareSelectData: allSchedules,
+          shareSelectYear: year,
+          shareSelectMonth: month,
+          shareSelectEmployees: employeeNames  // 预先获取员工名单
         })
       } catch (e) {
         console.error('解析分享数据失败:', e)
@@ -373,6 +353,66 @@ Page({
       imageUrl: '',  // 可设置分享卡片图片（建议为空，会使用默认截图）
     };
   },
+
+  loadSharedEmployee(allSchedules, selectedEmployee, year, month) {
+    const schedules = allSchedules[selectedEmployee] || {}
+
+    wx.showModal({
+      title: '加载排班数据',
+      content: `确定要加载 ${selectedEmployee} 的排班数据到本地吗？`,
+      confirmText: '确定',
+      cancelText: '取消',
+      success: (modalRes) => {
+        if (modalRes.confirm) {
+          wx.setStorageSync('schedules', schedules)
+          wx.setStorageSync('isEmployeeMode', true)
+          wx.setStorageSync('employeeName', selectedEmployee)
+
+          wx.showToast({ title: '加载成功', icon: 'success' })
+
+          wx.reLaunch({
+            url: `/pages/index/index?employee=${encodeURIComponent(selectedEmployee)}`
+          })
+        }
+      }
+    })
+  },
+
+  selectShareEmployee(e) {
+    const selectedEmployee = e.currentTarget.dataset.name
+    const { shareSelectData, shareSelectYear, shareSelectMonth } = this.data
+
+    // 直接加载，不弹确认框
+    const schedules = shareSelectData[selectedEmployee] || {}
+
+    wx.setStorageSync('schedules', schedules)
+    wx.setStorageSync('isEmployeeMode', true)
+    wx.setStorageSync('employeeName', selectedEmployee)
+
+    this.setData({
+      showShareSelectPanel: false,
+      shareSelectData: null
+    })
+
+    wx.showToast({ title: '加载成功', icon: 'success' })
+
+    setTimeout(() => {
+      wx.reLaunch({
+        url: `/pages/index/index?employee=${encodeURIComponent(selectedEmployee)}`
+      })
+    }, 1500)
+  },
+
+  closeShareSelectPanel() {
+    this.setData({
+      showShareSelectPanel: false,
+      shareSelectData: null,
+      shareSelectYear: null,
+      shareSelectMonth: null,
+      shareSelectEmployees: []
+    })
+  },
+
   onShow: function () {
     this.initData()
     // 重新从本地加载数据
@@ -501,7 +541,7 @@ Page({
   },
   navigateToSettings: function () {
     wx.navigateTo({
-      url: '/pages/settings/settings'
+      url: '/pages/admin/admin'
     })
   },
   toPinyin: function(str) {
@@ -884,20 +924,21 @@ Page({
   getAllTypeNames: function() {
     let customShifts = wx.getStorageSync('customShifts') || [];
     customShifts = customShifts.map(s => typeof s === 'string' ? s : s.name);
-    return ['早班', '休息', '中班'].concat(customShifts.filter(n => n && n !== '早班' && n !== '休息' && n !== '中班'));
+    return ['早班', '休息', '中班', '晚班'].concat(customShifts.filter(n => n && n !== '早班' && n !== '休息' && n !== '中班' && n !== '晚班'));
   },
   // 获取班次颜色
   getShiftColor: function(type) {
     if (!type) return '';
-    if (type === '早班') return '#007AFF';
-    if (type === '休息') return '#4CAF50';
-    if (type === '中班') return '#FF9800';
+    if (type === '早班') return '#4CAF50';
+    if (type === '休息') return '#9E9E9E';
+    if (type === '中班') return '#2196F3';
+    if (type === '晚班') return '#FF9800';
     // 检查是否包含"假"字，如果是则显示黄色背景
     if (type && type.indexOf('假') !== -1) return '#FFD700';
     let customShifts = wx.getStorageSync('customShifts') || [];
-    customShifts = customShifts.map(s => typeof s === 'string' ? { name: s, color: '#007AFF' } : s);
+    customShifts = customShifts.map(s => typeof s === 'string' ? { name: s, color: '#9C27B0' } : s);
     const found = customShifts.find(s => s.name === type);
-    return found ? found.color : '#007AFF';
+    return found ? found.color : '#9C27B0';
   },
   // 更新上方的每日信息卡片
   updateTopCards: function() {

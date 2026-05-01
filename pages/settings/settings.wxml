@@ -3,7 +3,4 @@
   <view class="setting-item">
     <button bindtap="goAdminPanel">管理员面板</button>
   </view>
-  <view class="setting-item">
-    <button bindtap="loadEmployeeData">加载员工排班到本地</button>
-  </view>
 </view>

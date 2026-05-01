@@ -13,25 +13,56 @@ Page({
     showShiftPopup: false,
     currentEditEmployee: '',
     currentEditDate: '',
-    shiftTypes: [
-      { name: '早班', color: '#4CAF50' },
-      { name: '中班', color: '#2196F3' },
-      { name: '晚班', color: '#FF9800' },
-      { name: '休息', color: '#9E9E9E' }
-    ],
+    shiftTypes: [],
     weekdayMap: {},
     shiftDisplay: {},
-    shiftColors: {} // 存储每个日期的星期几
+    shiftColors: {},
+    currentShiftType: '', // 当前选中的班次类型
+    showEmployeeMenu: false, // 员工操作菜单
+    currentEmployeeName: '' // 当前操作的员工姓名
   },
 
   onLoad() {
     this.loadEmployees()
     this.loadSchedules()
+    this.loadShiftTypes()
     this.setCurrentMonth(new Date())
     this.updateShiftDisplay()
     console.log('onLoad - employees:', this.data.employees)
     console.log('onLoad - dateHeaders:', this.data.dateHeaders)
     console.log('onLoad - allSchedules:', this.data.allSchedules)
+  },
+
+  selectShiftType(e) {
+    const type = e.currentTarget.dataset.type
+    this.setData({ currentShiftType: type })
+  },
+
+  setShift(e) {
+    const emp = e.currentTarget.dataset.employee
+    const date = e.currentTarget.dataset.date
+    const type = this.data.currentShiftType
+
+    if (!type) {
+      wx.showToast({ title: '请先选择班次', icon: 'none' })
+      return
+    }
+
+    console.log('setShift:', { emp, date, type })
+
+    let allSchedules = JSON.parse(JSON.stringify(this.data.allSchedules))
+    if (!allSchedules[emp]) allSchedules[emp] = {}
+
+    if (type === '__clear__') {
+      delete allSchedules[emp][date]
+    } else {
+      allSchedules[emp][date] = type
+    }
+
+    wx.setStorageSync('allSchedules', allSchedules)
+    this.setData({ allSchedules }, () => {
+      this.updateShiftDisplay()
+    })
   },
 
   updateShiftDisplay() {
@@ -64,6 +95,23 @@ Page({
     this.setData({ allSchedules })
   },
 
+  loadShiftTypes() {
+    const customShifts = wx.getStorageSync('customShifts') || []
+    const shiftTypes = [
+      { name: '早班', color: '#007AFF' },
+      { name: '休息', color: '#4CAF50' },
+      { name: '中班', color: '#FF9800' }
+    ]
+    customShifts.forEach(s => {
+      if (typeof s === 'string') {
+        shiftTypes.push({ name: s, color: '#9C27B0' })
+      } else if (s && s.name) {
+        shiftTypes.push({ name: s.name, color: s.color || '#9C27B0' })
+      }
+    })
+    this.setData({ shiftTypes })
+  },
+
   onNewEmployeeInput(e) {
     this.setData({ newEmployee: e.detail.value })
   },
@@ -77,11 +125,96 @@ Page({
     this.setData({ employees, newEmployee: '' })
   },
 
-  deleteEmployee(e) {
-    const name = e.currentTarget.dataset.name
+  deleteEmployee() {
+    const name = this.data.currentEmployeeName
     const employees = this.data.employees.filter(emp => emp !== name)
     wx.setStorageSync('employees', employees)
-    this.setData({ employees })
+    // 删除该员工的排班数据
+    const allSchedules = JSON.parse(JSON.stringify(this.data.allSchedules))
+    delete allSchedules[name]
+    wx.setStorageSync('allSchedules', allSchedules)
+    this.setData({ employees, allSchedules, showEmployeeMenu: false })
+    this.updateShiftDisplay()
+  },
+
+  showEmployeeMenu(e) {
+    const name = e.currentTarget.dataset.name
+    this.setData({ showEmployeeMenu: true, currentEmployeeName: name })
+  },
+
+  closeEmployeeMenu() {
+    this.setData({ showEmployeeMenu: false, currentEmployeeName: '' })
+  },
+
+  loadEmployeeToLocal() {
+    const name = this.data.currentEmployeeName
+    const allSchedules = this.data.allSchedules
+    const schedules = allSchedules[name] || {}
+
+    if (Object.keys(schedules).length === 0) {
+      wx.showToast({ title: '该员工暂无排班数据', icon: 'none' })
+      return
+    }
+
+    wx.showModal({
+      title: '确认加载',
+      content: `确定要加载 ${name} 的排班数据到本地吗？`,
+      confirmText: '确定',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          wx.setStorageSync('schedules', schedules)
+          wx.setStorageSync('isEmployeeMode', true)
+          wx.setStorageSync('employeeName', name)
+
+          wx.showToast({ title: '加载成功', icon: 'success' })
+          
+          setTimeout(() => {
+            wx.reLaunch({ url: '/pages/index/index' })
+          }, 1500)
+        }
+      }
+    })
+  },
+
+  editEmployee() {
+    const name = this.data.currentEmployeeName
+    wx.showModal({
+      title: '编辑姓名',
+      editable: true,
+      placeholderText: '请输入新姓名',
+      success: (res) => {
+        if (res.confirm && res.content && res.content.trim()) {
+          const newName = res.content.trim()
+          const employees = this.data.employees.map(emp => emp === name ? newName : emp)
+          wx.setStorageSync('employees', employees)
+          // 更新排班数据中的员工名
+          const allSchedules = JSON.parse(JSON.stringify(this.data.allSchedules))
+          if (allSchedules[name]) {
+            allSchedules[newName] = allSchedules[name]
+            delete allSchedules[name]
+            wx.setStorageSync('allSchedules', allSchedules)
+          }
+          this.setData({ employees, allSchedules, showEmployeeMenu: false })
+          this.updateShiftDisplay()
+        }
+      }
+    })
+  },
+
+  confirmDeleteEmployee() {
+    const name = this.data.currentEmployeeName
+    wx.showModal({
+      title: '确认删除',
+      content: `确定要删除员工 ${name} 及其所有排班数据吗？`,
+      confirmText: '删除',
+      confirmColor: '#FF4D4F',
+      success: (res) => {
+        if (res.confirm) {
+          this.deleteEmployee()
+        }
+      }
+    })
   },
 
   prevMonth() {
@@ -107,16 +240,19 @@ Page({
     const dayHeaders = days
     const weekMap = ['日', '一', '二', '三', '四', '五', '六']
     const weekdayMap = {}
+    const weekendMap = {}
     dateHeaders.forEach(dateStr => {
       const d = new Date(dateStr)
       weekdayMap[dateStr] = weekMap[d.getDay()]
+      weekendMap[dateStr] = d.getDay() === 0 || d.getDay() === 6 // 周日或周六
     })
     this.setData({
       currentMonth: `${year}年${month}月`,
       currentMonthDate: new Date(year, month-1, 1),
       dateHeaders,
       dayHeaders,
-      weekdayMap
+      weekdayMap,
+      weekendMap
     })
   },
 
@@ -131,61 +267,14 @@ Page({
     return val
   },
 
-  getShiftBgColor(employee, date) {
-    const type = this.getShiftText(employee, date)
-    if (!type || type === '-') return ''
-    const shiftTypes = this.data.shiftTypes
-    const found = shiftTypes.find(t => t.name === type)
-    return found ? found.color : '#007AFF'
-  },
-
-  getShiftTextColor(employee, date) {
-    const bg = this.getShiftBgColor(employee, date)
-    if (!bg) return '#999'
-    return '#ffffff'
-  },
-
-  editShift(e) {
-    const employee = e.currentTarget.dataset.employee
-    const date = e.currentTarget.dataset.date
-    this.setData({
-      showShiftPopup: true,
-      currentEditEmployee: employee,
-      currentEditDate: date
-    })
-  },
-
-  selectShift(e) {
-    const type = e.currentTarget.dataset.type
-    const emp = this.data.currentEditEmployee
-    const date = this.data.currentEditDate
-    console.log('selectShift called:', { type, emp, date })
-    if (!emp || !date) {
-      console.error('ERROR: emp or date is empty!', { emp, date })
-      this.setData({ showShiftPopup: false })
-      return
-    }
-    let allSchedules = JSON.parse(JSON.stringify(this.data.allSchedules))
-    console.log('Before update:', JSON.stringify(allSchedules))
-    if (!allSchedules[emp]) allSchedules[emp] = {}
-    if (type === '__clear__') {
-      delete allSchedules[emp][date]
-    } else {
-      allSchedules[emp][date] = type
-    }
-    console.log('After update:', JSON.stringify(allSchedules))
-    wx.setStorageSync('allSchedules', allSchedules)
-    const freshData = wx.getStorageSync('allSchedules') || {}
-    console.log('Fresh data:', JSON.stringify(freshData))
-    this.setData({ allSchedules: freshData, showShiftPopup: false }, () => {
-      console.log('setData callback - allSchedules:', JSON.stringify(this.data.allSchedules))
-      this.updateShiftDisplay()
-    })
-    console.log('setData called')
-  },
-
-  closeShiftPopup() {
-    this.setData({ showShiftPopup: false })
+  getShiftBgColor(str) {
+    if (!str || str === '-') return 'transparent'
+    if (str === '早班') return '#4CAF50'
+    if (str === '休息') return '#9E9E9E'
+    if (str === '中班') return '#2196F3'
+    if (str === '晚班') return '#FF9800'
+    if (str && str.indexOf('假') !== -1) return '#FFD700'
+    return '#9C27B0'
   },
 
   shareEmployee(e) {

@@ -1,5 +1,24 @@
 <!--index.wxml-->
 <view class="container">
+  <!-- 分享全部员工 - 员工选择面板 -->
+  <view wx:if="{{showShareSelectPanel}}" class="share-select-mask">
+    <view class="share-select-panel">
+      <view class="share-select-header">
+        <text class="share-select-title">{{shareSelectYear}}年{{shareSelectMonth}}月排班</text>
+        <text class="share-select-subtitle">选择要加载的员工</text>
+      </view>
+      <view class="share-select-list">
+        <block wx:for="{{shareSelectEmployees}}" wx:key="item">
+          <view class="share-select-item" bindtap="selectShareEmployee" data-name="{{item}}">
+            <view class="share-select-avatar">{{item.charAt(0)}}</view>
+            <text class="share-select-name">{{item}}</text>
+          </view>
+        </block>
+      </view>
+      <view class="share-select-cancel" bindtap="closeShareSelectPanel">取消</view>
+    </view>
+  </view>
+
   <!-- 员工模式标题 -->
   <view wx:if="{{isEmployeeMode}}" class="employee-title">
     {{employeeName}}的{{currentMonth}}排班

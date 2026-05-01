@@ -73,6 +73,54 @@
   padding: 10rpx 20rpx;
 }
 
+/* 班次选择器 */
+.shift-selector {
+  padding: 16rpx 20rpx;
+  background: #f8f9fc;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+}
+.shift-selector-title {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+.shift-selector-scroll {
+  white-space: nowrap;
+}
+.shift-selector-list {
+  display: inline-flex;
+  gap: 16rpx;
+  padding: 8rpx 0;
+}
+.shift-type-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  font-size: 26rpx;
+  color: #333;
+  border: 3rpx solid transparent;
+  white-space: nowrap;
+}
+.shift-type-btn.active {
+  background: #007AFF;
+  color: #fff;
+}
+.color-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+.shift-cell.selectable {
+  cursor: pointer;
+}
+.shift-cell.selectable:active {
+  opacity: 0.7;
+}
+
 /* 员工输入 */
 .employee-input-row {
   display: flex;
@@ -107,20 +155,23 @@
 .employee-tag {
   background: #f0f4ff;
   border-radius: 40rpx;
-  padding: 12rpx 20rpx;
+  padding: 16rpx 24rpx;
   display: flex;
   align-items: center;
-  gap: 24rpx;
+  justify-content: space-between;
   border: 1rpx solid #e0e6ff;
+}
+.employee-tag:active {
+  background: #e0e6ff;
 }
 .employee-name {
   font-size: 28rpx;
   color: #1e3a8a;
   font-weight: 500;
 }
-.tag-actions {
-  display: flex;
-  gap: 16rpx;
+.employee-arrow {
+  font-size: 32rpx;
+  color: #999;
 }
 
 /* 小按钮 */
@@ -158,19 +209,49 @@
 }
 
 /* ========== 表格核心布局 ========== */
-.table-scroll {
-  width: 100%;
-  height: 600rpx;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+.table-container {
+  display: flex;
+  position: relative;
 }
-.schedule-table {
+
+/* 左侧固定姓名列 */
+.fixed-name-column {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  width: 130rpx;
+  min-width: 130rpx;
+  background: #fff;
+  border-right: 2rpx solid #eee;
   display: flex;
   flex-direction: column;
-  min-width: max-content;
-  border: 1rpx solid #f0f2f5;
-  border-radius: 16rpx;
-  background: #fff;
+}
+.fixed-cell {
+  width: 130rpx;
+  min-width: 130rpx;
+  height: 80rpx;
+  padding: 0 12rpx;
+  text-align: center;
+  font-size: 26rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 1rpx solid #f4f5f7;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.fixed-cell.header-cell {
+  background: #f9fafc;
+  font-weight: 600;
+  color: #556;
+}
+
+/* 右侧可滚动区域 */
+.table-scroll {
+  flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 表头 */
@@ -198,7 +279,8 @@
 .cell {
   width: 120rpx;
   min-width: 120rpx;
-  padding: 20rpx 12rpx;
+  height: 80rpx;
+  padding: 0 12rpx;
   text-align: center;
   font-size: 26rpx;
   display: flex;
@@ -216,21 +298,8 @@
   font-weight: 600;
   color: #556;
 }
-
-/* 姓名列 - 固定在左侧 */
-.name-cell {
-  position: sticky;
-  left: 0;
-  z-index: 5;
-  background: #fff;
-  border-right: 2rpx solid #eee;
-  width: 130rpx;
-  min-width: 130rpx;
-  font-weight: 600;
-}
-.table-header .name-cell {
-  background: #f9fafc;
-  z-index: 6;
+.header-cell.date-cell.weekend {
+  background-color: #fff9e6;
 }
 
 /* 日期表头 */
@@ -351,4 +420,58 @@
   font-size: 28rpx;
   border-top: 1rpx solid #eee;
   padding-top: 20rpx;
+}
+
+/* 员工操作菜单弹窗 */
+.employee-menu-popup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 32rpx;
+  padding: 40rpx;
+  width: 80%;
+  z-index: 101;
+  box-shadow: 0 20rpx 50rpx rgba(0,0,0,0.15);
+}
+.menu-title {
+  text-align: center;
+  margin-bottom: 30rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #eee;
+}
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  color: #333;
+  border: none;
+}
+.menu-item:active {
+  background: #e9ecf1;
+}
+.menu-item.delete {
+  background: #fff0f0;
+  color: #e74c3c;
+}
+.menu-cancel {
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #eee;
 }

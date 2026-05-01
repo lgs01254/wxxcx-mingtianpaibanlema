@@ -584,4 +584,85 @@ button {
   box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
 }
 
+/* 分享全部员工选择面板 */
+.share-select-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.share-select-panel {
+  width: 80%;
+  max-height: 70vh;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  overflow: hidden;
+}
+.share-select-header {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+.share-select-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+.share-select-subtitle {
+  font-size: 26rpx;
+  color: #999;
+}
+.share-select-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.share-select-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx;
+  background: #f5f6fa;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+}
+.share-select-item:last-child {
+  margin-bottom: 0;
+}
+.share-select-item:active {
+  background: #e9ecf1;
+}
+.share-select-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.share-select-name {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+}
+.share-select-cancel {
+  text-align: center;
+  padding: 24rpx;
+  margin-top: 20rpx;
+  color: #999;
+  font-size: 28rpx;
+  border-top: 1rpx solid #eee;
+}
+
 
