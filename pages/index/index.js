@@ -77,25 +77,158 @@ Page({
       })
     }
 
-    // 处理分享链接中的参数（保留原有逻辑）
-    if (options.year && options.month && options.schedules) {
+    // 处理分享链接中的参数
+    if (options.share === 'all' && options.schedules) {
+      // 分享的全部员工排班 - 列出员工供选择
+      try {
+        const year = parseInt(options.year)
+        const month = parseInt(options.month)
+        const allSchedules = JSON.parse(decodeURIComponent(options.schedules))
+
+        console.log('=== Share All Received ===')
+        console.log('allSchedules:', JSON.stringify(allSchedules))
+
+        const employeeNames = Object.keys(allSchedules)
+        
+        if (employeeNames.length === 0) {
+          wx.showToast({ title: '暂无员工数据', icon: 'none' })
+          return
+        }
+
+        // 显示员工列表供选择
+        wx.showActionSheet({
+          itemList: employeeNames,
+          title: `选择要加载的员工（${year}年${month}月排班）`,
+          success: (res) => {
+            const selectedEmployee = employeeNames[res.tapIndex]
+            const schedules = allSchedules[selectedEmployee] || {}
+
+            wx.showModal({
+              title: '加载排班数据',
+              content: `确定要加载 ${selectedEmployee} 的排班数据到本地吗？`,
+              confirmText: '确定',
+              cancelText: '取消',
+              success: (modalRes) => {
+                if (modalRes.confirm) {
+                  // 保存到本地存储
+                  wx.setStorageSync('schedules', schedules)
+                  wx.setStorageSync('isEmployeeMode', true)
+                  wx.setStorageSync('employeeName', selectedEmployee)
+                  
+                  wx.showToast({ title: '加载成功', icon: 'success' })
+                  
+                  // 跳转主页显示
+                  wx.reLaunch({
+                    url: `/pages/index/index?employee=${encodeURIComponent(selectedEmployee)}`
+                  })
+                }
+              }
+            })
+          },
+          fail: () => {
+            wx.showToast({ title: '已取消', icon: 'none' })
+          }
+        })
+      } catch (e) {
+        console.error('解析分享数据失败:', e)
+        wx.showToast({ title: '数据解析失败', icon: 'none' })
+      }
+    } else if (options.share === '1' && options.schedules) {
+      // 分享的单人排班 - 直接从路径解析数据
+      try {
+        const employee = decodeURIComponent(options.employee)
+        const year = parseInt(options.year)
+        const month = parseInt(options.month)
+        const schedules = JSON.parse(decodeURIComponent(options.schedules))
+
+        console.log('=== Share Received ===')
+        console.log('employee:', employee)
+        console.log('schedules:', JSON.stringify(schedules))
+
+        // 显示保存确认弹窗
+        wx.showModal({
+          title: '收到排班分享',
+          content: `${employee}的${year}年${month}月排班表，是否保存到本地？`,
+          confirmText: '保存',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              // 保存到本地存储
+              wx.setStorageSync('schedules', schedules)
+              wx.setStorageSync('isEmployeeMode', true)
+              wx.setStorageSync('employeeName', employee)
+            }
+            // 跳转页面显示
+            wx.reLaunch({
+              url: `/pages/index/index?employee=${encodeURIComponent(employee)}&year=${year}&month=${month}`
+            })
+          }
+        })
+      } catch (e) {
+        console.error('解析分享数据失败:', e)
+        wx.showToast({ title: '数据解析失败', icon: 'none' })
+      }
+    } else if (options.employee) {
+      // 员工模式（从存储读取分享数据）
+      try {
+        const employee = decodeURIComponent(options.employee)
+        const year = options.year ? parseInt(options.year) : new Date().getFullYear()
+        const month = options.month ? parseInt(options.month) : new Date().getMonth() + 1
+
+        // 尝试从存储读取分享数据
+        const shareTempData = wx.getStorageSync('shareTempData') || {}
+        let schedules = {}
+
+        if (shareTempData.employee === employee && shareTempData.year == year && shareTempData.month == month) {
+          schedules = shareTempData.schedules || {}
+        } else {
+          // 从本地存储读取该员工排班
+          const allSchedules = wx.getStorageSync('allSchedules') || {}
+          schedules = allSchedules[employee] || {}
+        }
+
+        console.log('员工模式 - employee:', employee, 'schedules:', JSON.stringify(schedules))
+
+        // 显示保存确认弹窗
+        wx.showModal({
+          title: '查看员工排班',
+          content: `${employee}的排班表，是否加载？`,
+          confirmText: '加载',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              wx.setStorageSync('schedules', schedules)
+              wx.setStorageSync('isEmployeeMode', true)
+              wx.setStorageSync('employeeName', employee)
+            }
+            this.setData({
+              isEmployeeMode: true,
+              employeeName: employee,
+              schedules: schedules
+            })
+          }
+        })
+      } catch (e) {
+        console.error('处理员工数据失败:', e)
+        wx.showToast({ title: '数据加载失败', icon: 'none' })
+      }
+    } else if (options.year && options.month && options.schedules) {
       try {
         const year = parseInt(options.year)
         const month = parseInt(options.month)
         const scheduleData = decodeURIComponent(options.schedules)
         const schedules = JSON.parse(scheduleData)
-        
-        // 如果单人模式，只保存该员工的排班到页面data，不影响其他
-        if (this.data.isEmployeeMode) {
-          this.setData({ schedules })
-          const currentMonthDate = new Date(year, month - 1, 1)
-          this.setData({ currentMonthDate })
-        } else {
-          // 原来逻辑：覆盖全局
-          wx.setStorageSync('schedules', schedules)
-          const currentMonthDate = new Date(year, month - 1, 1)
-          this.setData({ currentMonthDate })
-        }
+
+        console.log('分享接收 - year:', year, 'month:', month)
+        console.log('分享接收 - schedules:', JSON.stringify(schedules))
+
+        // 保存到本地存储
+        wx.setStorageSync('schedules', schedules)
+
+        const currentMonthDate = new Date(year, month - 1, 1)
+        this.setData({ currentMonthDate, schedules })
+
+        wx.showToast({ title: '已加载分享排班', icon: 'success' })
       } catch (e) {
         console.error('解析分享数据失败:', e)
       }

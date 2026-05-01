@@ -1,36 +1,43 @@
 // settings.js
 Page({
-  data: {
-    reminderTime: '08:00'
-  },
-  onLoad: function () {
-    const reminderTime = wx.getStorageSync('reminderTime') || '08:00'
-    this.setData({ reminderTime })
-  },
-  changeReminderTime: function (e) {
-    this.setData({
-      reminderTime: e.detail.value
-    })
-    wx.setStorageSync('reminderTime', e.detail.value)
-  },
-  clearSchedules: function () {
-    wx.showModal({
-      title: '确认清除',
-      content: '确定要清除所有排班数据吗？',
-      success: (res) => {
-        if (res.confirm) {
-          wx.removeStorageSync('schedules')
-          
-          wx.showToast({
-            title: '排班数据已清除',
-            icon: 'success',
-            duration: 2000
-          })
-        }
-      }
-    })
-  },
   goAdminPanel: function () {
     wx.navigateTo({ url: '/pages/admin/admin' })
+  },
+  loadEmployeeData: function () {
+    const employees = wx.getStorageSync('employees') || []
+    const allSchedules = wx.getStorageSync('allSchedules') || {}
+
+    if (employees.length === 0) {
+      wx.showToast({ title: '暂无员工数据', icon: 'none' })
+      return
+    }
+
+    const employeeNames = employees.map(e => e)
+
+    wx.showActionSheet({
+      itemList: employeeNames,
+      success: (res) => {
+        const selectedEmployee = employeeNames[res.tapIndex]
+        const schedules = allSchedules[selectedEmployee] || {}
+
+        if (Object.keys(schedules).length === 0) {
+          wx.showToast({ title: '该员工暂无排班数据', icon: 'none' })
+          return
+        }
+
+        wx.setStorageSync('schedules', schedules)
+        wx.setStorageSync('isEmployeeMode', true)
+        wx.setStorageSync('employeeName', selectedEmployee)
+
+        wx.showModal({
+          title: '加载成功',
+          content: `已加载 ${selectedEmployee} 的排班数据到本地`,
+          showCancel: false,
+          success: () => {
+            wx.reLaunch({ url: '/pages/index/index' })
+          }
+        })
+      }
+    })
   }
 })

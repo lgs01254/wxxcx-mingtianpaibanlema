@@ -1,14 +1,4 @@
 <view class="admin-container">
-  <!-- 头部月份选择 -->
-  <view class="header-bar">
-    <text class="title">管理员面板</text>
-    <view class="month-selector">
-      <view class="arrow-btn" bindtap="prevMonth">◀</view>
-      <text class="month-text">{{currentMonth}}</text>
-      <view class="arrow-btn" bindtap="nextMonth">▶</view>
-    </view>
-  </view>
-
   <!-- 员工管理 -->
   <view class="employee-card">
     <view class="section-title">员工名单</view>
@@ -21,19 +11,25 @@
         <view class="employee-tag">
           <text class="employee-name">{{item}}</text>
           <view class="tag-actions">
-            <button class="share-btn mini" open-type="share" data-employee="{{item}}" bindtap="shareEmployee">分享</button>
+            <button class="share-btn mini" open-type="share" data-employee="{{item}}">分享</button>
             <view class="delete-btn mini" bindtap="deleteEmployee" data-name="{{item}}">删除</view>
           </view>
         </view>
       </block>
       <view wx:if="{{employees.length === 0}}" class="empty-tip">暂无员工，请添加</view>
     </view>
+    <button class="share-all-btn" open-type="share" data-all="true">分享全部员工排班</button>
   </view>
 
   <!-- 排班表 -->
   <view class="schedule-card">
     <view class="section-title">排班表</view>
-    <scroll-view scroll-x="true" class="table-scroll" enhanced show-scrollbar="{{false}}">
+    <view class="month-selector">
+      <view class="arrow-btn" bindtap="prevMonth">◀</view>
+      <text class="month-text">{{currentMonth}}</text>
+      <view class="arrow-btn" bindtap="nextMonth">▶</view>
+    </view>
+    <scroll-view scroll-x="true" scroll-y="true" class="table-scroll" enhanced show-scrollbar="{{false}}">
       <view class="schedule-table">
         <!-- 表头 -->
         <view class="table-header">
@@ -44,7 +40,6 @@
               <text class="header-weekday">{{weekdayMap[item]}}</text>
             </view>
           </block>
-          <view class="cell header-cell action-cell">操作</view>
         </view>
 
         <!-- 员工行 -->
@@ -53,14 +48,11 @@
             <view class="cell name-cell">{{emp}}</view>
             <block wx:for="{{dateHeaders}}" wx:key="item" wx:for-item="date">
               <view class="cell shift-cell"
-                    data-employee="{{emp}}" data-date="{{date}}" bindtap="editShift">
-                {{getShiftText(emp, date)}}
+                    data-employee="{{emp}}" data-date="{{date}}" bindtap="editShift"
+                    style="background-color: {{shiftDisplay[emp][date] !== '-' ? shiftColors[emp][date] : ''}}; color: {{shiftDisplay[emp][date] !== '-' ? '#fff' : '#999'}}">
+                {{shiftDisplay[emp][date]}}
               </view>
             </block>
-            <view class="cell action-cell">
-              <button class="share-icon-btn" open-type="share" data-employee="{{emp}}" bindtap="shareEmployee">📤</button>
-              <view class="delete-icon-btn" bindtap="deleteEmployee" data-name="{{emp}}">🗑️</view>
-            </view>
           </view>
         </block>
       </view>

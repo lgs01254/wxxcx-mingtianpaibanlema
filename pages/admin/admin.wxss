@@ -52,6 +52,26 @@
   border-left: 6rpx solid #007AFF;
   padding-left: 20rpx;
 }
+.schedule-card .month-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30rpx;
+  margin-bottom: 20rpx;
+  padding: 10rpx 0;
+}
+.schedule-card .month-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  min-width: 160rpx;
+  text-align: center;
+}
+.schedule-card .arrow-btn {
+  font-size: 32rpx;
+  color: #007AFF;
+  padding: 10rpx 20rpx;
+}
 
 /* 员工输入 */
 .employee-input-row {
@@ -127,31 +147,48 @@
   text-align: center;
   padding: 40rpx;
 }
+.share-all-btn {
+  background: #007AFF;
+  color: #fff;
+  border-radius: 40rpx;
+  padding: 20rpx;
+  text-align: center;
+  margin-top: 20rpx;
+  font-size: 28rpx;
+}
 
 /* ========== 表格核心布局 ========== */
 .table-scroll {
   width: 100%;
-  white-space: nowrap;
+  height: 600rpx;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .schedule-table {
-  display: inline-block;
-  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
   border: 1rpx solid #f0f2f5;
   border-radius: 16rpx;
-  overflow: hidden;
   background: #fff;
 }
 
-/* 每一行都是 flex */
-.table-header,
+/* 表头 */
+.table-header {
+  display: flex;
+  align-items: stretch;
+  background: #f9fafc;
+  border-bottom: 2rpx solid #eee;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* 每一行 */
 .table-row {
   display: flex;
   align-items: stretch;
   border-bottom: 1rpx solid #f4f5f7;
-}
-.table-header {
-  background: #f9fafc;
-  border-bottom: 2rpx solid #eee;
 }
 .table-row:last-child {
   border-bottom: none;
@@ -159,7 +196,8 @@
 
 /* 通用单元格 */
 .cell {
-  min-width: 120rpx;      /* 所有日期/班次列统一宽度 */
+  width: 120rpx;
+  min-width: 120rpx;
   padding: 20rpx 12rpx;
   text-align: center;
   font-size: 26rpx;
@@ -179,24 +217,24 @@
   color: #556;
 }
 
-/* 固定姓名列 */
+/* 姓名列 - 固定在左侧 */
 .name-cell {
   position: sticky;
   left: 0;
-  z-index: 2;
+  z-index: 5;
   background: #fff;
   border-right: 2rpx solid #eee;
-  min-width: 130rpx;      /* 姓名列稍宽一些 */
+  width: 130rpx;
+  min-width: 130rpx;
   font-weight: 600;
 }
 .table-header .name-cell {
   background: #f9fafc;
-  z-index: 3;
+  z-index: 6;
 }
 
-/* 日期表头（显示日期数字和星期） */
+/* 日期表头 */
 .date-cell {
-  min-width: 120rpx;
   font-size: 22rpx;
 }
 .header-day {
@@ -209,40 +247,31 @@
   color: #999;
 }
 
-/* 班次格子 - 宽度与日期列完全相同 */
+/* 班次格子 */
 .shift-cell {
   background: #fcfcfc;
   color: #999;
   transition: 0.2s;
-  min-width: 120rpx;          /* 与日期列一致 */
-  padding: 20rpx 12rpx;       /* 与 .cell 保持一致 */
-  margin: 0;                  /* 移除任何 margin */
-  border-radius: 0;           /* 默认无圆角 */
-}
-/* 有排班时的样式：仅改变背景和文字颜色，不影响尺寸 */
-.shift-cell.has-shift {
-  color: #ffffff !important;
-  font-weight: 500;
-  border-radius: 12rpx;       /* 仅圆角美化 */
-  /* 注意：不添加额外的 padding 或 margin */
 }
 .shift-cell:active {
   opacity: 0.7;
 }
 
-/* 固定操作列 */
+/* 操作列 - 固定在右侧 */
 .action-cell {
   position: sticky;
   right: 0;
-  z-index: 2;
+  z-index: 5;
   background: #fff;
   border-left: 2rpx solid #eee;
+  width: 140rpx;
   min-width: 140rpx;
   flex-direction: row;
   gap: 10rpx;
 }
 .table-header .action-cell {
   background: #f9fafc;
+  z-index: 6;
 }
 
 .share-icon-btn,
