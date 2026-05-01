@@ -1,6 +1,7 @@
 // xlsx解析工具 - 简化版本，用于解析排班表
 
-const XLSX = require('xlsx');
+// 加载xlsx库
+const XLSX = require('./xlsx.full.min.js');
 
 // 解析Excel文件
 function parseExcel(filePath) {
