@@ -43,20 +43,33 @@ function parseExcel(filePath) {
 
 // 解析Excel数据为排班格式
 function parseExcelData(excelData) {
+  console.log('=== 开始解析Excel数据 ===')
+  console.log('原始数据行数:', excelData.length)
+  console.log('表头:', excelData[0])
+  
   if (!excelData || excelData.length < 2) {
+    console.log('错误：数据为空或行数不足')
     return null
   }
   
   // 获取表头
   const headers = excelData[0]
   if (!headers || headers.length < 2) {
+    console.log('错误：表头为空或列数不足')
     return null
   }
   
   // 查找姓名列和日期列的起始位置
   const { nameColumnIndex, dateStartIndex, dateHeaders } = analyzeHeaders(headers)
   
+  console.log('分析结果：')
+  console.log('  姓名列索引:', nameColumnIndex)
+  console.log('  日期起始索引:', dateStartIndex)
+  console.log('  日期表头数量:', dateHeaders.length)
+  console.log('  日期表头:', dateHeaders)
+  
   if (dateHeaders.length === 0) {
+    console.log('错误：未找到日期列')
     return null
   }
   
@@ -65,33 +78,50 @@ function parseExcelData(excelData) {
   const schedules = {}
   const currentYearMonth = getCurrentYearMonth()
   
+  console.log('开始解析员工数据，总行数:', excelData.length - 1)
+  
   for (let i = 1; i < excelData.length; i++) {
     const row = excelData[i]
-    if (!row || row.length < dateStartIndex + 1) continue
+    console.log(`\n第${i}行数据:`, row)
+    
+    if (!row || row.length < dateStartIndex + 1) {
+      console.log(`  跳过：数据不完整`)
+      continue
+    }
     
     // 获取姓名（从指定列）
     const nameValue = row[nameColumnIndex]
+    console.log(`  姓名列值[${nameColumnIndex}]:`, nameValue)
+    
     const employeeName = extractChineseName(String(nameValue))
+    console.log(`  提取的姓名:`, employeeName)
     
     // 如果没有识别到姓名，跳过该行
     if (!employeeName) {
       // 检查是否是汇总行
       if (isSummaryRow(row)) {
+        console.log(`  跳过：汇总行`)
         continue
       }
       // 尝试从第一列提取姓名
       const altName = extractChineseName(String(row[0]))
-      if (!altName) continue
+      console.log(`  从第一列尝试提取姓名:`, altName)
+      if (!altName) {
+        console.log(`  跳过：未识别到姓名`)
+        continue
+      }
       employeeName = altName
     }
     
     // 跳过重复员工
     if (employees.includes(employeeName)) {
+      console.log(`  跳过：重复员工 ${employeeName}`)
       continue
     }
     
     employees.push(employeeName)
     schedules[employeeName] = {}
+    console.log(`  添加员工: ${employeeName}`)
     
     // 获取排班年月（从第三列）
     let yearMonth = currentYearMonth
@@ -118,8 +148,13 @@ function parseExcelData(excelData) {
   }
   
   if (employees.length === 0) {
+    console.log('解析完成：未找到任何员工')
     return null
   }
+  
+  console.log('=== 解析完成 ===')
+  console.log('识别到的员工:', employees)
+  console.log('排班数据:', schedules)
   
   return {
     employees,
