@@ -19,7 +19,6 @@ function parseExcel(filePath) {
           
           // 获取第一个可见的工作表
           const sheetName = getFirstVisibleSheet(workbook)
-          console.log('选择的工作表:', sheetName)
           
           if (!sheetName) {
             reject(new Error('未找到可见的工作表'))
@@ -73,7 +72,6 @@ function readExcelWithSheets(filePath) {
             }
           })
           
-          console.log('工作表列表:', sheetList)
           resolve({ workbook, sheetList })
         } catch (error) {
           console.error('解析Excel失败:', error)
@@ -90,21 +88,15 @@ function readExcelWithSheets(filePath) {
 
 // 获取第一个可见的工作表
 function getFirstVisibleSheet(workbook) {
-  // 遍历所有工作表，找到第一个可见的
   for (const sheetName of workbook.SheetNames) {
     const sheet = workbook.Sheets[sheetName]
     const sheetState = sheet['!scope'] ? sheet['!scope'].state : 'visible'
     
-    // visible表示可见，hidden表示隐藏，veryHidden表示超隐藏
     if (sheetState !== 'hidden' && sheetState !== 'veryHidden') {
-      console.log(`工作表 ${sheetName} 状态: ${sheetState}`)
       return sheetName
     }
-    console.log(`工作表 ${sheetName} 已隐藏，跳过`)
   }
   
-  // 如果都隐藏了，返回第一个
-  console.log('所有工作表都隐藏，使用第一个:', workbook.SheetNames[0])
   return workbook.SheetNames[0]
 }
 
@@ -123,125 +115,78 @@ function readSheetData(workbook, sheetName) {
 
 // 解析Excel数据为排班格式
 function parseExcelData(excelData) {
-  console.log('=== 开始解析Excel数据 ===')
-  console.log('原始数据行数:', excelData.length)
-  console.log('表头:', excelData[0])
-  
   if (!excelData || excelData.length < 2) {
-    console.log('错误：数据为空或行数不足')
     return null
   }
   
-  // 获取表头
   const headers = excelData[0]
   if (!headers || headers.length < 2) {
-    console.log('错误：表头为空或列数不足')
     return null
   }
   
-  // 查找姓名列和日期列的起始位置
   const { nameColumnIndex, dateStartIndex, dateHeaders } = analyzeHeaders(headers)
   
-  console.log('分析结果：')
-  console.log('  姓名列索引:', nameColumnIndex)
-  console.log('  日期起始索引:', dateStartIndex)
-  console.log('  日期表头数量:', dateHeaders.length)
-  console.log('  日期表头:', dateHeaders)
-  
   if (dateHeaders.length === 0) {
-    console.log('错误：未找到日期列')
     return null
   }
   
-  // 解析员工和排班数据
   const employees = []
   const schedules = {}
   const currentYearMonth = getCurrentYearMonth()
   
-  console.log('开始解析员工数据，总行数:', excelData.length - 1)
-  
   for (let i = 1; i < excelData.length; i++) {
     const row = excelData[i]
-    console.log(`\n第${i}行数据:`, row)
     
     if (!row || row.length < dateStartIndex + 1) {
-      console.log(`  跳过：数据不完整`)
       continue
     }
     
-    // 获取姓名（从指定列）
     const nameValue = row[nameColumnIndex]
-    console.log(`  姓名列值[${nameColumnIndex}]:`, nameValue)
-    
     const employeeName = extractChineseName(String(nameValue))
-    console.log(`  提取的姓名:`, employeeName)
     
-    // 如果没有识别到姓名，跳过该行
     if (!employeeName) {
-      // 检查是否是汇总行
       if (isSummaryRow(row)) {
-        console.log(`  跳过：汇总行`)
         continue
       }
-      // 尝试从第一列提取姓名
       const altName = extractChineseName(String(row[0]))
-      console.log(`  从第一列尝试提取姓名:`, altName)
       if (!altName) {
-        console.log(`  跳过：未识别到姓名`)
         continue
       }
       employeeName = altName
     }
     
-    // 跳过重复员工
     if (employees.includes(employeeName)) {
-      console.log(`  跳过：重复员工 ${employeeName}`)
       continue
     }
     
     employees.push(employeeName)
     schedules[employeeName] = {}
-    console.log(`  添加员工: ${employeeName}`)
     
-    // 获取排班年月（从第三列）
     let yearMonth = currentYearMonth
     if (row[2]) {
       const ym = String(row[2]).trim()
       if (ym.match(/^\d{4}-\d{1,2}$/)) {
         yearMonth = ym
-        console.log(`  排班年月: ${yearMonth}`)
       }
     }
     
-    // 解析该行的排班数据
-    console.log(`  日期起始索引: ${dateStartIndex}, 日期表头数量: ${dateHeaders.length}`)
     let dateIndex = 0
-    let shiftCount = 0
     for (let j = dateStartIndex; j < row.length && dateIndex < dateHeaders.length; j++) {
       const shiftText = String(row[j] || '').trim()
       if (dateHeaders[dateIndex]) {
         const normalizedShift = normalizeShiftName(shiftText)
-        console.log(`    列${j}: '${shiftText}' -> 标准化后: ${normalizedShift}`)
         if (normalizedShift) {
           const fullDate = formatDate(yearMonth, dateHeaders[dateIndex])
           schedules[employeeName][fullDate] = normalizedShift
-          shiftCount++
-          console.log(`    -> 添加排班: ${fullDate} = ${normalizedShift}`)
         }
       }
       dateIndex++
     }
-    console.log(`  该行共添加 ${shiftCount} 条排班记录`)
   }
   
   if (employees.length === 0) {
-    console.log('解析完成：未找到任何员工')
     return null
   }
-  
-  console.log('=== 解析完成 ===')
-  console.log('识别到的员工:', employees)
-  console.log('排班数据:', schedules)
   
   return {
     employees,
@@ -252,54 +197,37 @@ function parseExcelData(excelData) {
 
 // 分析表头结构
 function analyzeHeaders(headers) {
-  let nameColumnIndex = 0 // 默认第一列
-  let dateStartIndex = 1  // 默认第二列开始
+  let nameColumnIndex = 0
+  let dateStartIndex = 1
   const dateHeaders = []
   
-  console.log('分析表头:', headers)
-  
-  // 查找姓名列（优先匹配"姓名"，避免误识别"人员工号"）
   for (let i = 0; i < Math.min(5, headers.length); i++) {
     const header = String(headers[i]).trim()
-    // 优先匹配"姓名"，避免将"人员工号"误认为姓名列
     if (header === '姓名' || header.includes('姓名') && !header.includes('工号') && !header.includes('编号')) {
       nameColumnIndex = i
-      console.log(`找到姓名列在索引 ${i}: ${header}`)
       break
     }
   }
   
-  // 查找日期列开始位置
-  // 跳过前几列（人员工号、姓名、排班年月等）
   let startFound = false
   for (let i = 0; i < headers.length; i++) {
     const header = String(headers[i]).trim()
     
-    console.log(`检查第${i}列: '${header}'`)
-    
-    // 如果找到"1"开始的日期，标记开始
     if (!startFound && /^1$/.test(header)) {
       startFound = true
       dateStartIndex = i
-      console.log(`找到日期起始列在索引 ${i}`)
     }
     
-    // 收集日期列
     if (startFound && isValidDateHeader(header)) {
       dateHeaders.push(header)
-      console.log(`添加日期: '${header}'`)
     }
     
-    // 如果遇到"早班"、"中班"等班次统计列，停止
     if (header.includes('班') && !/^\d+$/.test(header)) {
-      console.log(`遇到班次统计列，停止: ${header}`)
       break
     }
   }
   
-  // 如果没有找到日期列，尝试备用方案：查找连续的数字列
   if (dateHeaders.length === 0) {
-    console.log('未找到日期列，尝试备用方案')
     for (let i = 0; i < headers.length; i++) {
       const header = String(headers[i]).trim()
       if (/^\d{1,2}$/.test(header)) {
@@ -309,9 +237,7 @@ function analyzeHeaders(headers) {
             dateHeaders.push(header)
             if (dateHeaders.length === 1) {
               dateStartIndex = i
-              console.log(`备用方案：找到日期起始列在索引 ${i}`)
             }
-            console.log(`备用方案添加日期: '${header}'`)
           }
         }
       }
