@@ -208,12 +208,24 @@ function analyzeHeaders(headers) {
 function isSummaryRow(row) {
   if (!row || row.length === 0) return true
   
-  const firstValue = String(row[0]).trim()
-  const secondValue = row[1] ? String(row[1]).trim() : ''
+  // 检查是否是空行（所有元素都是空）
+  const allEmpty = row.every(cell => {
+    const val = String(cell || '').trim()
+    return val === '' || val === 'undefined' || val === 'null'
+  })
+  if (allEmpty) return true
   
-  // 检查是否是汇总行标记
-  const summaryMarkers = ['合计', '总计', '早', '中', '晚', '休息', 'empty']
-  return summaryMarkers.some(marker => firstValue.includes(marker) || secondValue.includes(marker))
+  // 检查任意列是否包含汇总行标记
+  const summaryMarkers = ['合计', '总计', '早', '中', '晚', '休息']
+  
+  for (let i = 0; i < Math.min(5, row.length); i++) {
+    const value = String(row[i] || '').trim()
+    if (summaryMarkers.some(marker => value === marker)) {
+      return true
+    }
+  }
+  
+  return false
 }
 
 // 获取当前年月
