@@ -129,22 +129,29 @@ function parseExcelData(excelData) {
       const ym = String(row[2]).trim()
       if (ym.match(/^\d{4}-\d{1,2}$/)) {
         yearMonth = ym
+        console.log(`  排班年月: ${yearMonth}`)
       }
     }
     
     // 解析该行的排班数据
+    console.log(`  日期起始索引: ${dateStartIndex}, 日期表头数量: ${dateHeaders.length}`)
     let dateIndex = 0
+    let shiftCount = 0
     for (let j = dateStartIndex; j < row.length && dateIndex < dateHeaders.length; j++) {
       const shiftText = String(row[j] || '').trim()
       if (dateHeaders[dateIndex]) {
         const normalizedShift = normalizeShiftName(shiftText)
+        console.log(`    列${j}: '${shiftText}' -> 标准化后: ${normalizedShift}`)
         if (normalizedShift) {
           const fullDate = formatDate(yearMonth, dateHeaders[dateIndex])
           schedules[employeeName][fullDate] = normalizedShift
+          shiftCount++
+          console.log(`    -> 添加排班: ${fullDate} = ${normalizedShift}`)
         }
       }
       dateIndex++
     }
+    console.log(`  该行共添加 ${shiftCount} 条排班记录`)
   }
   
   if (employees.length === 0) {
