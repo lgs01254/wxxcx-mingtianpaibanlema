@@ -393,10 +393,10 @@ Page({
   // 选择Excel文件
   selectExcelFile() {
     wx.showActionSheet({
-      itemList: ['从微信文件选择', '示例数据（演示）'],
+      itemList: ['从微信聊天记录选择', '示例数据（演示）'],
       success: (res) => {
         if (res.tapIndex === 0) {
-          this.chooseExcelFromSystem()
+          this.chooseExcelFromChat()
         } else {
           this.loadDemoExcelData()
         }
@@ -404,28 +404,208 @@ Page({
     })
   },
 
-  // 从系统选择Excel文件
-  chooseExcelFromSystem() {
+  // 从微信聊天记录选择Excel文件
+  chooseExcelFromChat() {
     wx.chooseMessageFile({
       count: 1,
       type: 'file',
       extension: ['xlsx', 'xls', 'csv'],
       success: (res) => {
-        const tempFilePaths = res.tempFiles
-        if (tempFilePaths && tempFilePaths.length > 0) {
-          const filePath = tempFilePaths[0].path
-          console.log('选择的文件:', filePath)
-          wx.showToast({ title: '文件选择成功', icon: 'success' })
-          // 实际项目中这里需要接入第三方Excel解析库
-          // 为了演示，我们直接加载示例数据
-          this.loadDemoExcelData()
+        const tempFiles = res.tempFiles
+        if (tempFiles && tempFiles.length > 0) {
+          const fileInfo = tempFiles[0]
+          const filePath = fileInfo.path
+          const fileName = fileInfo.name
+          const fileSize = fileInfo.size
+          
+          console.log('选择的文件信息:', {
+            name: fileName,
+            path: filePath,
+            size: fileSize
+          })
+          
+          wx.showLoading({ title: '正在读取文件...' })
+          
+          // 判断文件类型
+          const isCSV = fileName.toLowerCase().endsWith('.csv')
+          
+          if (isCSV) {
+            // CSV文件可以直接读取解析
+            this.readCSVFile(filePath, fileName)
+          } else {
+            // xlsx/xls文件需要第三方库解析，这里演示处理
+            wx.showLoading({ title: '正在解析Excel...' })
+            setTimeout(() => {
+              // 读取文件内容（微信小程序不支持直接读取，需要借助服务端或第三方库）
+              this.processExcelFile(filePath, fileName)
+            }, 500)
+          }
         }
       },
       fail: (err) => {
-        console.log('选择文件失败:', err)
-        wx.showToast({ title: '选择文件失败', icon: 'none' })
+        console.error('选择文件失败:', err)
+        if (err.errMsg.includes('cancel')) {
+          // 用户取消选择，不提示
+        } else {
+          wx.showToast({ title: '选择文件失败', icon: 'none' })
+        }
       }
     })
+  },
+  
+  // 读取CSV文件
+  readCSVFile(filePath, fileName) {
+    wx.showLoading({ title: '正在解析CSV...' })
+    
+    // 尝试读取文件内容
+    wx.getFileSystemManager().readFile({
+      filePath: filePath,
+      encoding: 'utf-8',
+      success: (res) => {
+        console.log('CSV文件读取成功，数据长度:', res.data.length)
+        
+        try {
+          const csvData = res.data
+          const parsedData = this.parseCSVData(csvData)
+          
+          if (parsedData && parsedData.employees && parsedData.employees.length > 0) {
+            this.showConfirmDialog(parsedData)
+          } else {
+            wx.showToast({ title: '未能识别到有效数据', icon: 'none' })
+          }
+        } catch (error) {
+          console.error('解析CSV失败:', error)
+          wx.showToast({ title: '解析CSV失败', icon: 'none' })
+        }
+        
+        wx.hideLoading()
+      },
+      fail: (err) => {
+        console.error('读取CSV文件失败:', err)
+        wx.hideLoading()
+        wx.showToast({ title: '读取文件失败', icon: 'none' })
+      }
+    })
+  },
+  
+  // 解析CSV数据
+  parseCSVData(csvData) {
+    const lines = csvData.split('\n').filter(line => line.trim())
+    
+    if (lines.length < 2) {
+      return null
+    }
+    
+    // 假设第一行是表头，格式：姓名, 1号, 2号, 3号, ...
+    // 或者：姓名, 2026-05-01, 2026-05-02, ...
+    const headerLine = lines[0]
+    const headerParts = this.splitCSVLine(headerLine)
+    
+    // 检查表头格式
+    const dateHeaders = []
+    
+    // 如果第一列不是日期，则跳过
+    for (let i = 1; i < headerParts.length; i++) {
+      const header = headerParts[i].trim()
+      if (this.isValidDateHeader(header)) {
+        dateHeaders.push(header)
+      }
+    }
+    
+    // 解析每行数据
+    const employees = []
+    const schedules = {}
+    
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim()
+      if (!line) continue
+      
+      const parts = this.splitCSVLine(line)
+      if (parts.length < 2) continue
+      
+      const employeeName = parts[0].trim()
+      if (!employeeName) continue
+      
+      employees.push(employeeName)
+      schedules[employeeName] = {}
+      
+      // 解析该员工的排班数据
+      let dateIndex = 0
+      for (let j = 1; j < parts.length && dateIndex < dateHeaders.length; j++) {
+        const shiftText = parts[j].trim()
+        if (shiftText && dateHeaders[dateIndex]) {
+          const normalizedShift = this.normalizeShiftName(shiftText)
+          if (normalizedShift) {
+            schedules[employeeName][dateHeaders[dateIndex]] = normalizedShift
+          }
+        }
+        dateIndex++
+      }
+    }
+    
+    return {
+      employees,
+      schedules,
+      shiftTypes: ['早班', '休息', '中班', '晚班']
+    }
+  },
+  
+  // 分割CSV行（处理引号）
+  splitCSVLine(line) {
+    const result = []
+    let current = ''
+    let inQuotes = false
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      
+      if (char === '"') {
+        inQuotes = !inQuotes
+      } else if (char === ',' && !inQuotes) {
+        result.push(current)
+        current = ''
+      } else {
+        current += char
+      }
+    }
+    
+    result.push(current)
+    return result
+  },
+  
+  // 检查是否是有效的日期表头
+  isValidDateHeader(header) {
+    if (!header) return false
+    
+    // 检查是否是日期格式：2026-05-01 或 2026/05/01 或 类似格式
+    const datePatterns = [
+      /^\d{4}-\d{1,2}-\d{1,2}$/,  // 2026-5-1
+      /^\d{4}\/\d{1,2}\/\d{1,2}$/, // 2026/5/1
+      /^(\d{1,2}[-\/]\d{1,2})$/,    // 5-1 或 5/1
+      /^\d{1,2}$/                    // 1, 2, 3...
+    ]
+    
+    return datePatterns.some(pattern => pattern.test(header.trim()))
+  },
+  
+  // 处理Excel文件（xlsx/xls）
+  processExcelFile(filePath, fileName) {
+    // 微信小程序环境下，xlsx/xls文件无法直接解析
+    // 需要借助第三方插件如 xlsx 或 发送到服务器端解析
+    
+    wx.showModal({
+      title: '文件已选择',
+      content: `已选择文件: ${fileName}\n\n提示：Excel格式文件解析需要额外配置。\n建议使用CSV格式导出排班表，可直接导入。\n\n是否使用示例数据演示？`,
+      confirmText: '使用示例',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          this.loadDemoExcelData()
+        }
+      }
+    })
+    
+    wx.hideLoading()
   },
 
   // 加载示例Excel数据（模拟解析）
