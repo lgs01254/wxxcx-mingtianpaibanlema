@@ -171,10 +171,11 @@ function analyzeHeaders(headers) {
   
   console.log('分析表头:', headers)
   
-  // 查找姓名列
+  // 查找姓名列（优先匹配"姓名"，避免误识别"人员工号"）
   for (let i = 0; i < Math.min(5, headers.length); i++) {
     const header = String(headers[i]).trim()
-    if (header.includes('姓名') || header.includes('名字') || header.includes('人员')) {
+    // 优先匹配"姓名"，避免将"人员工号"误认为姓名列
+    if (header === '姓名' || header.includes('姓名') && !header.includes('工号') && !header.includes('编号')) {
       nameColumnIndex = i
       console.log(`找到姓名列在索引 ${i}: ${header}`)
       break
