@@ -23,7 +23,9 @@ Page({
     currentEmployeeName: '', // 当前操作的员工姓名
     isParsingExcel: false, // 是否正在解析Excel
     currentExcelFilePath: '', // 当前Excel文件路径
-    currentExcelFileName: '' // 当前Excel文件名
+    currentExcelFileName: '', // 当前Excel文件名
+    selectedEmployees: [], // 选中的员工列表（批量操作）
+    isSelectAll: false // 是否全选
   },
 
   onLoad() {
@@ -139,6 +141,94 @@ Page({
     wx.setStorageSync('allSchedules', allSchedules)
     this.setData({ employees, allSchedules, showEmployeeMenu: false })
     this.updateShiftDisplay()
+  },
+
+  // 处理员工点击（进入菜单）
+  handleEmployeeTap(e) {
+    const name = e.currentTarget.dataset.name
+    // 如果正在选择模式，不显示菜单，只选中
+    if (this.data.selectedEmployees.length > 0) {
+      this.toggleEmployeeSelect({ currentTarget: { dataset: { name } } })
+      return
+    }
+    this.setData({ showEmployeeMenu: true, currentEmployeeName: name })
+  },
+
+  // 切换员工选择
+  toggleEmployeeSelect(e) {
+    const name = e.currentTarget.dataset.name
+    const selectedEmployees = [...this.data.selectedEmployees]
+    const index = selectedEmployees.indexOf(name)
+    
+    if (index > -1) {
+      selectedEmployees.splice(index, 1)
+    } else {
+      selectedEmployees.push(name)
+    }
+    
+    // 更新全选状态
+    const isSelectAll = selectedEmployees.length === this.data.employees.length && this.data.employees.length > 0
+    
+    this.setData({ selectedEmployees, isSelectAll })
+  },
+
+  // 切换全选
+  toggleSelectAll() {
+    if (this.data.isSelectAll) {
+      this.setData({ selectedEmployees: [], isSelectAll: false })
+    } else {
+      this.setData({ selectedEmployees: [...this.data.employees], isSelectAll: true })
+    }
+  },
+
+  // 清除选择
+  clearSelection() {
+    this.setData({ selectedEmployees: [], isSelectAll: false })
+  },
+
+  // 确认批量删除
+  confirmBatchDelete() {
+    const { selectedEmployees } = this.data
+    
+    wx.showModal({
+      title: '确认删除',
+      content: `确定要删除选中的 ${selectedEmployees.length} 名员工吗？删除后将同时删除其所有排班数据。`,
+      confirmColor: '#e74c3c',
+      success: (res) => {
+        if (res.confirm) {
+          this.batchDeleteEmployees(selectedEmployees)
+        }
+      }
+    })
+  },
+
+  // 执行批量删除
+  batchDeleteEmployees(names) {
+    let employees = [...this.data.employees]
+    let allSchedules = { ...this.data.allSchedules }
+    
+    // 移除选中的员工
+    names.forEach(name => {
+      const index = employees.indexOf(name)
+      if (index > -1) {
+        employees.splice(index, 1)
+      }
+      delete allSchedules[name]
+    })
+    
+    // 保存到本地
+    wx.setStorageSync('employees', employees)
+    wx.setStorageSync('allSchedules', allSchedules)
+    
+    this.setData({ 
+      employees, 
+      allSchedules, 
+      selectedEmployees: [], 
+      isSelectAll: false 
+    })
+    this.updateShiftDisplay()
+    
+    wx.showToast({ title: `已删除 ${names.length} 名员工`, icon: 'success' })
   },
 
   showEmployeeMenu(e) {

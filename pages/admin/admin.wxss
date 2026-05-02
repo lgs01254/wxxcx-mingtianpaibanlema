@@ -48,9 +48,43 @@
   font-size: 32rpx;
   font-weight: 600;
   color: #2c3e50;
-  margin-bottom: 24rpx;
   border-left: 6rpx solid #007AFF;
   padding-left: 20rpx;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.select-all {
+  font-size: 26rpx;
+  color: #007AFF;
+}
+
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.selected-count {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.batch-btn {
+  font-size: 26rpx;
+  color: #fff;
+  background: #e74c3c;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.batch-btn.cancel {
+  background: #999;
 }
 .schedule-card .month-selector {
   display: flex;
@@ -172,6 +206,21 @@
 .employee-arrow {
   font-size: 32rpx;
   color: #999;
+}
+.checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border: 2rpx solid #ccc;
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16rpx;
+  background: #fff;
+}
+.checkbox-inner {
+  font-size: 24rpx;
+  color: #007AFF;
 }
 
 /* 小按钮 */

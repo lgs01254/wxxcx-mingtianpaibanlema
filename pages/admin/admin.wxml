@@ -1,14 +1,27 @@
 <view class="admin-container">
   <!-- 员工管理 -->
   <view class="employee-card">
-    <view class="section-title">员工名单</view>
+    <view class="section-header">
+      <view class="section-title">员工名单</view>
+      <view class="batch-actions" wx:if="{{selectedEmployees.length > 0}}">
+        <text class="selected-count">已选 {{selectedEmployees.length}} 人</text>
+        <view class="batch-btn" bindtap="confirmBatchDelete">批量删除</view>
+        <view class="batch-btn cancel" bindtap="clearSelection">取消</view>
+      </view>
+      <view class="select-all" wx:else bindtap="toggleSelectAll">
+        <text>{{isSelectAll ? '取消全选' : '全选'}}</text>
+      </view>
+    </view>
     <view class="employee-input-row">
       <input class="employee-input" placeholder="输入姓名添加员工" value="{{newEmployee}}" bindinput="onNewEmployeeInput" confirm-type="done" bindconfirm="addEmployee" />
       <view class="add-btn" bindtap="addEmployee">添加</view>
     </view>
     <view class="employee-list">
       <block wx:for="{{employees}}" wx:key="item">
-        <view class="employee-tag" bindtap="showEmployeeMenu" data-name="{{item}}">
+        <view class="employee-tag" bindtap="handleEmployeeTap" data-name="{{item}}">
+          <view class="checkbox" bindtap.stop="toggleEmployeeSelect" data-name="{{item}}">
+            <view class="checkbox-inner" wx:if="{{selectedEmployees.includes(item)}}">✓</view>
+          </view>
           <text class="employee-name">{{item}}</text>
           <text class="employee-arrow">›</text>
         </view>
