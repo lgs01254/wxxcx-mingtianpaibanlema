@@ -156,6 +156,9 @@ Page({
 
   // 切换员工选择
   toggleEmployeeSelect(e) {
+    // 阻止事件冒泡
+    e.stopPropagation()
+    
     const name = e.currentTarget.dataset.name
     const selectedEmployees = [...this.data.selectedEmployees]
     const index = selectedEmployees.indexOf(name)

@@ -19,7 +19,7 @@
     <view class="employee-list">
       <block wx:for="{{employees}}" wx:key="item">
         <view class="employee-tag" bindtap="handleEmployeeTap" data-name="{{item}}">
-          <view class="checkbox" bindtap.stop="toggleEmployeeSelect" data-name="{{item}}">
+          <view class="checkbox" bindtap="toggleEmployeeSelect" data-name="{{item}}">
             <view class="checkbox-inner" wx:if="{{selectedEmployees.includes(item)}}">✓</view>
           </view>
           <text class="employee-name">{{item}}</text>
