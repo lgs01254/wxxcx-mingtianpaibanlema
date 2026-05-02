@@ -704,39 +704,59 @@ Page({
     const visibleSheets = sheetList.filter(s => s.isVisible)
     const itemsPerPage = 5
     const totalPages = Math.ceil(visibleSheets.length / itemsPerPage)
+    const hasPrev = page > 1
+    const hasNext = page < totalPages
     
     // 计算当前页的选项
     const startIndex = (page - 1) * itemsPerPage
     const endIndex = Math.min(startIndex + itemsPerPage, visibleSheets.length)
     const currentItems = visibleSheets.slice(startIndex, endIndex)
     
-    // 构建选项列表
-    const itemList = currentItems.map((sheet, index) => `${startIndex + index + 1}. ${sheet.name}`)
+    // 构建选项列表：第一页不需要上一页，最后一页不需要下一页
+    const itemList = []
     
-    // 添加下一页/完成选项
-    if (page < totalPages) {
-      itemList.push(`下一页 (${page}/${totalPages})`)
-    } else {
-      itemList.push(`完成，共${visibleSheets.length}个工作表`)
+    // 添加上一页（如果不是第一页）
+    if (hasPrev) {
+      itemList.push(`↑ 上一页 (${page - 1}/${totalPages})`)
+    }
+    
+    // 添加当前页的工作表
+    currentItems.forEach((sheet, index) => {
+      itemList.push(`${startIndex + index + 1}. ${sheet.name}`)
+    })
+    
+    // 添加下一页（如果不是最后一页）
+    if (hasNext) {
+      itemList.push(`↓ 下一页 (${page + 1}/${totalPages})`)
     }
     
     wx.showActionSheet({
       itemList: itemList,
       success: (res) => {
         const selectedIndex = res.tapIndex
+        let currentItemIndex = 0
+        
+        // 点击了上一页
+        if (hasPrev && selectedIndex === 0) {
+          this.showSheetSelectorModal(sheetList, workbook, fileName, page - 1)
+          return
+        }
+        
+        // 调整索引
+        if (hasPrev) currentItemIndex = 1
         
         // 点击了下一页
-        if (selectedIndex === currentItems.length) {
-          if (page < totalPages) {
-            this.showSheetSelectorModal(sheetList, workbook, fileName, page + 1)
-          }
+        if (hasNext && selectedIndex === itemList.length - 1) {
+          this.showSheetSelectorModal(sheetList, workbook, fileName, page + 1)
           return
         }
         
         // 点击了工作表
-        const sheetIndex = startIndex + selectedIndex
-        const selectedSheet = visibleSheets[sheetIndex]
-        this.parseExcelSheet(workbook, selectedSheet.name, fileName)
+        const sheetIndex = startIndex + (selectedIndex - currentItemIndex)
+        if (sheetIndex >= 0 && sheetIndex < visibleSheets.length) {
+          const selectedSheet = visibleSheets[sheetIndex]
+          this.parseExcelSheet(workbook, selectedSheet.name, fileName)
+        }
       },
       fail: () => {
         wx.showToast({ title: '选择取消', icon: 'none' })
