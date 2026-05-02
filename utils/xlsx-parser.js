@@ -115,6 +115,129 @@ function readSheetData(workbook, sheetName) {
 
 // 解析Excel数据为排班格式
 function parseExcelData(excelData) {
+  if (!excelData || excelData.length < 3) {
+    return null
+  }
+  
+  // 分析数据结构，确定表头行和数据起始行
+  let headerRowIndex = 0
+  let dataStartRowIndex = 1
+  let dateStartIndex = 2  // 日期列从第3列开始（索引2）
+  const dateHeaders = []
+  let yearMonth = null
+  
+  // 查找表头行和日期列
+  for (let i = 0; i < excelData.length && i < 5; i++) {
+    const row = excelData[i]
+    if (!row || row.length < 3) continue
+    
+    // 在这行中查找"姓名"和日期列
+    for (let col = 0; col < row.length; col++) {
+      const cellValue = String(row[col] || '').trim()
+      
+      // 查找日期1-31
+      if (/^\d{1,2}$/.test(cellValue)) {
+        const num = parseInt(cellValue)
+        if (num >= 1 && num <= 31) {
+          if (dateHeaders.length === 0 || parseInt(dateHeaders[dateHeaders.length - 1]) + 1 === num) {
+            dateHeaders.push(cellValue)
+            if (dateHeaders.length === 1) {
+              dateStartIndex = col
+              headerRowIndex = i
+              dataStartRowIndex = i + 1
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // 查找年月信息
+  for (let i = 0; i < Math.min(5, excelData.length); i++) {
+    const row = excelData[i]
+    if (!row) continue
+    for (let col = 0; col < row.length; col++) {
+      const cellValue = String(row[col] || '').trim()
+      const ymMatch = cellValue.match(/(\d{4})[-/年](\d{1,2})/)
+      if (ymMatch) {
+        yearMonth = `${ymMatch[1]}-${ymMatch[2].padStart(2, '0')}`
+        break
+      }
+    }
+    if (yearMonth) break
+  }
+  
+  // 如果没有找到日期列，尝试备用方案
+  if (dateHeaders.length === 0) {
+    const headers = excelData[0]
+    if (headers) {
+      const result = analyzeHeaders(headers)
+      if (result.dateHeaders.length > 0) {
+        return parseExcelDataSimple(excelData)
+      }
+    }
+    return null
+  }
+  
+  const defaultYearMonth = yearMonth || getCurrentYearMonth()
+  const employees = []
+  const schedules = {}
+  
+  // 从数据起始行开始解析
+  for (let i = dataStartRowIndex; i < excelData.length; i++) {
+    const row = excelData[i]
+    
+    if (!row || row.length < dateStartIndex + 1) {
+      continue
+    }
+    
+    // 跳过汇总行
+    if (isSummaryRow(row)) {
+      continue
+    }
+    
+    // 获取姓名（从第2列，索引1）
+    const nameValue = row[1]
+    if (!nameValue) continue
+    
+    const employeeName = extractChineseName(String(nameValue))
+    if (!employeeName) continue
+    
+    // 跳过重复员工
+    if (employees.includes(employeeName)) {
+      continue
+    }
+    
+    employees.push(employeeName)
+    schedules[employeeName] = {}
+    
+    // 解析该行的排班数据（从日期列开始）
+    for (let j = dateStartIndex; j < row.length && j - dateStartIndex < dateHeaders.length; j++) {
+      const shiftText = String(row[j] || '').trim()
+      const dateIndex = j - dateStartIndex
+      if (dateHeaders[dateIndex]) {
+        const normalizedShift = normalizeShiftName(shiftText)
+        if (normalizedShift) {
+          const fullDate = formatDate(defaultYearMonth, dateHeaders[dateIndex])
+          schedules[employeeName][fullDate] = normalizedShift
+        }
+      }
+    }
+  }
+  
+  if (employees.length === 0) {
+    return null
+  }
+  
+  return {
+    employees,
+    schedules,
+    shiftTypes: ['早班', '休息', '中班', '晚班']
+  }
+}
+
+// 简单的Excel数据解析（备用方案）
+function parseExcelDataSimple(excelData) {
   if (!excelData || excelData.length < 2) {
     return null
   }
@@ -141,15 +264,12 @@ function parseExcelData(excelData) {
       continue
     }
     
-    // 跳过汇总行
     if (isSummaryRow(row)) {
       continue
     }
     
-    // 查找该行的姓名
     let employeeName = null
     
-    // 遍历该行的所有列，查找汉字姓名
     for (let col = 0; col < row.length; col++) {
       const cellValue = String(row[col] || '').trim()
       const name = extractChineseName(cellValue)
@@ -163,7 +283,6 @@ function parseExcelData(excelData) {
       continue
     }
     
-    // 跳过重复员工
     if (employees.includes(employeeName)) {
       continue
     }
@@ -171,7 +290,6 @@ function parseExcelData(excelData) {
     employees.push(employeeName)
     schedules[employeeName] = {}
     
-    // 尝试获取该行的年月信息
     let currentYearMonth = defaultYearMonth
     for (let col = 0; col < Math.min(5, row.length); col++) {
       const cellValue = String(row[col] || '').trim()
@@ -181,7 +299,6 @@ function parseExcelData(excelData) {
       }
     }
     
-    // 解析该行的排班数据（从日期列开始）
     for (let j = dateStartIndex; j < row.length && j - dateStartIndex < dateHeaders.length; j++) {
       const shiftText = String(row[j] || '').trim()
       const dateIndex = j - dateStartIndex
