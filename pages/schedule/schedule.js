@@ -57,28 +57,42 @@ Page({
     this.initDates(year, month)
     this.loadSchedules()
     this.setData({ selectedDates: [] })
-    // 读取自定义班次
     let customShifts = wx.getStorageSync('customShifts') || []
-    // 兼容旧数据
     customShifts = customShifts.map(s => typeof s === 'string' ? { name: s, color: '#007AFF' } : s)
-    // 将默认班次也转换为对象格式
     let defaultTypes = [
       { name: '早班', color: '#007AFF' },
       { name: '休息', color: '#4CAF50' },
       { name: '中班', color: '#FF9800' }
     ]
-    // 读取备注数据
     const remarks = wx.getStorageSync('remarks') || {}
     this.setData({
       scheduleTypes: defaultTypes.concat(customShifts),
       remarks
     })
+    this.updateShiftCounts()
+  },
+
+  updateShiftCounts: function() {
+    const schedules = wx.getStorageSync('schedules') || {}
+    const { year, month } = this.data
+    const counts = {}
+    const daysInMonth = new Date(year, month, 0).getDate()
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const day = String(i).padStart(2, '0')
+      const monthPadded = String(month).padStart(2, '0')
+      const dateStr = `${year}-${monthPadded}-${day}`
+      if (schedules[dateStr]) {
+        const shift = schedules[dateStr]
+        counts[shift] = (counts[shift] || 0) + 1
+      }
+    }
+
+    this.setData({ shiftCounts: counts })
   },
   onShow: function () {
     let customShifts = wx.getStorageSync('customShifts') || []
-    // 兼容旧数据
     customShifts = customShifts.map(s => typeof s === 'string' ? { name: s, color: '#007AFF' } : s)
-    // 将默认班次也转换为对象格式
     let defaultTypes = [
       { name: '早班', color: '#007AFF' },
       { name: '休息', color: '#4CAF50' },
@@ -87,6 +101,8 @@ Page({
     this.setData({
       scheduleTypes: defaultTypes.concat(customShifts)
     })
+    this.loadSchedules()
+    this.updateShiftCounts()
   },
   // 初始化指定年月的日期
   initDates: function (year, month) {
@@ -175,11 +191,11 @@ Page({
       icon: 'success',
       duration: 1500
     })
+    this.updateShiftCounts()
     setTimeout(() => {
       this.setData({ isSaving: false, selectedDates: [] })
       this.updateDateGrid([], this.data.year, this.data.month)
-      this.loadSchedules() // 新增：刷新schedules，保证WXML能显示
-      // wx.navigateBack() // 不再跳转页面，方便继续排下一个班
+      this.loadSchedules()
     }, 1500)
   },
   // 全选日期
@@ -261,9 +277,9 @@ Page({
             icon: 'success',
             duration: 1200
           })
-          // 刷新网格
           this.updateDateGrid([], this.data.year, this.data.month)
           this.setData({ selectedDates: [] })
+          this.updateShiftCounts()
         }
       }
     })
