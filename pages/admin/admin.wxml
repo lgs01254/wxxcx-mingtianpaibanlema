@@ -126,4 +126,34 @@
     </view>
     <view class="menu-cancel" bindtap="closeEmployeeMenu">取消</view>
   </view>
+
+  <!-- 工作表选择弹窗 -->
+  <view class="popup-mask" wx:if="{{showSheetSelector}}" bindtap="closeSheetSelector"></view>
+  <view class="sheet-selector-popup" wx:if="{{showSheetSelector}}">
+    <view class="sheet-selector-header">
+      <view class="sheet-selector-title">选择工作表</view>
+      <view class="sheet-selector-subtitle">共 {{sheetList.length}} 个工作表</view>
+    </view>
+    <view class="sheet-selector-list">
+      <view class="sheet-selector-all" bindtap="toggleSelectAllSheets">
+        <view class="checkbox" catchtap="toggleSelectAllSheets">
+          <view class="checkbox-inner" wx:if="{{isSelectAllSheets}}">✓</view>
+        </view>
+        <text>{{isSelectAllSheets ? '取消全选' : '全选'}}</text>
+      </view>
+      <block wx:for="{{sheetList}}" wx:key="name">
+        <view class="sheet-tag" bindtap="toggleSheetSelect" data-name="{{item.name}}">
+          <view class="checkbox" catchtap="toggleSheetSelect" data-name="{{item.name}}">
+            <view class="checkbox-inner" wx:if="{{selectedSheets[item.name]}}">✓</view>
+          </view>
+          <text class="sheet-name">{{item.name}}</text>
+          <text class="sheet-status" wx:if="{{!item.isVisible}}">（隐藏）</text>
+        </view>
+      </block>
+    </view>
+    <view class="sheet-selector-actions">
+      <view class="sheet-btn cancel" bindtap="closeSheetSelector">取消</view>
+      <view class="sheet-btn confirm" bindtap="confirmSheetSelection">确认</view>
+    </view>
+  </view>
 </view>

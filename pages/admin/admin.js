@@ -26,7 +26,13 @@ Page({
     currentExcelFileName: '', // 当前Excel文件名
     selectedMap: {}, // 选中的员工映射（批量操作）
     selectedEmployees: [], // 选中的员工列表（批量操作）
-    isSelectAll: false // 是否全选
+    isSelectAll: false, // 是否全选
+    showSheetSelector: false, // 是否显示工作表选择器
+    sheetList: [], // 工作表列表
+    selectedSheets: {}, // 选中的工作表映射
+    isSelectAllSheets: false, // 是否全选工作表
+    currentWorkbook: null, // 当前工作簿
+    currentExcelFileName: '' // 当前Excel文件名
   },
 
   onLoad() {
@@ -806,89 +812,124 @@ Page({
 
   // 显示工作表选择器
   showSheetSelector(sheetList, workbook, fileName) {
+    // 过滤隐藏的工作表
     const visibleSheets = sheetList.filter(s => s.isVisible)
     
-    // 如果工作表数量超过6个，使用自定义弹窗
-    if (visibleSheets.length > 6) {
-      this.showSheetSelectorModal(visibleSheets, workbook, fileName)
-    } else {
-      const sheetNames = visibleSheets.map(s => s.name)
-      wx.showActionSheet({
-        itemList: sheetNames,
-        success: (res) => {
-          const selectedSheet = visibleSheets[res.tapIndex]
-          this.parseExcelSheet(workbook, selectedSheet.name, fileName)
-        },
-        fail: (err) => {
-          console.error('选择工作表失败:', err)
-        }
+    // 初始化选中状态
+    const selectedSheets = {}
+    visibleSheets.forEach(sheet => {
+      selectedSheets[sheet.name] = false
+    })
+    
+    this.setData({
+      sheetList: visibleSheets,
+      selectedSheets,
+      isSelectAllSheets: false,
+      currentWorkbook: workbook,
+      currentExcelFileName: fileName,
+      showSheetSelector: true
+    })
+  },
+
+  // 切换工作表选择
+  toggleSheetSelect(e) {
+    const name = e.currentTarget.dataset.name
+    const selectedSheets = { ...this.data.selectedSheets }
+    
+    selectedSheets[name] = !selectedSheets[name]
+    
+    // 更新全选状态
+    const allSelected = this.data.sheetList.every(sheet => selectedSheets[sheet.name])
+    
+    this.setData({ selectedSheets, isSelectAllSheets: allSelected })
+  },
+
+  // 切换全选工作表
+  toggleSelectAllSheets() {
+    if (this.data.isSelectAllSheets) {
+      const selectedSheets = {}
+      this.data.sheetList.forEach(sheet => {
+        selectedSheets[sheet.name] = false
       })
+      this.setData({ selectedSheets, isSelectAllSheets: false })
+    } else {
+      const selectedSheets = {}
+      this.data.sheetList.forEach(sheet => {
+        selectedSheets[sheet.name] = true
+      })
+      this.setData({ selectedSheets, isSelectAllSheets: true })
     }
   },
 
-  // 显示工作表选择弹窗（超过6个工作表时使用）
-  showSheetSelectorModal(sheetList, workbook, fileName, page = 1) {
-    const visibleSheets = sheetList.filter(s => s.isVisible)
-    const itemsPerPage = 5
-    const totalPages = Math.ceil(visibleSheets.length / itemsPerPage)
-    const hasPrev = page > 1
-    const hasNext = page < totalPages
+  // 关闭工作表选择器
+  closeSheetSelector() {
+    this.setData({ showSheetSelector: false })
+  },
+
+  // 确认工作表选择
+  confirmSheetSelection() {
+    const selectedSheetNames = Object.keys(this.data.selectedSheets).filter(name => this.data.selectedSheets[name])
     
-    // 计算当前页的选项
-    const startIndex = (page - 1) * itemsPerPage
-    const endIndex = Math.min(startIndex + itemsPerPage, visibleSheets.length)
-    const currentItems = visibleSheets.slice(startIndex, endIndex)
-    
-    // 构建选项列表：第一页不需要上一页，最后一页不需要下一页
-    const itemList = []
-    
-    // 添加上一页（如果不是第一页）
-    if (hasPrev) {
-      itemList.push(`↑ 上一页 (${page - 1}/${totalPages})`)
+    if (selectedSheetNames.length === 0) {
+      wx.showToast({ title: '请至少选择一个工作表', icon: 'none' })
+      return
     }
     
-    // 添加当前页的工作表
-    currentItems.forEach((sheet, index) => {
-      itemList.push(`${startIndex + index + 1}. ${sheet.name}`)
-    })
+    this.setData({ showSheetSelector: false })
     
-    // 添加下一页（如果不是最后一页）
-    if (hasNext) {
-      itemList.push(`↓ 下一页 (${page + 1}/${totalPages})`)
+    // 依次解析选中的工作表
+    wx.showLoading({ title: '正在解析...' })
+    this.parseSelectedSheets(selectedSheetNames, 0)
+  },
+
+  // 依次解析选中的工作表
+  parseSelectedSheets(sheetNames, index) {
+    if (index >= sheetNames.length) {
+      wx.hideLoading()
+      wx.showToast({ title: '解析完成', icon: 'success' })
+      return
     }
     
-    wx.showActionSheet({
-      itemList: itemList,
-      success: (res) => {
-        const selectedIndex = res.tapIndex
-        let currentItemIndex = 0
-        
-        // 点击了上一页
-        if (hasPrev && selectedIndex === 0) {
-          this.showSheetSelectorModal(sheetList, workbook, fileName, page - 1)
-          return
-        }
-        
-        // 调整索引
-        if (hasPrev) currentItemIndex = 1
-        
-        // 点击了下一页
-        if (hasNext && selectedIndex === itemList.length - 1) {
-          this.showSheetSelectorModal(sheetList, workbook, fileName, page + 1)
-          return
-        }
-        
-        // 点击了工作表
-        const sheetIndex = startIndex + (selectedIndex - currentItemIndex)
-        if (sheetIndex >= 0 && sheetIndex < visibleSheets.length) {
-          const selectedSheet = visibleSheets[sheetIndex]
-          this.parseExcelSheet(workbook, selectedSheet.name, fileName)
-        }
-      },
-      fail: () => {
-        wx.showToast({ title: '选择取消', icon: 'none' })
+    const sheetName = sheetNames[index]
+    
+    try {
+      const excelData = xlsxParser.readSheetData(this.data.currentWorkbook, sheetName)
+      const parsedData = xlsxParser.parseExcelData(excelData)
+      
+      if (parsedData && parsedData.employees && parsedData.employees.length > 0) {
+        // 合并数据
+        this.mergeParsedData(parsedData)
       }
+      
+      // 继续解析下一个
+      this.parseSelectedSheets(sheetNames, index + 1)
+    } catch (error) {
+      // 继续解析下一个
+      this.parseSelectedSheets(sheetNames, index + 1)
+    }
+  },
+
+  // 合并解析的数据
+  mergeParsedData(parsedData) {
+    let employees = [...this.data.employees]
+    let allSchedules = { ...this.data.allSchedules }
+    
+    parsedData.employees.forEach(name => {
+      if (!employees.includes(name)) {
+        employees.push(name)
+      }
+      if (!allSchedules[name]) {
+        allSchedules[name] = {}
+      }
+      Object.assign(allSchedules[name], parsedData.schedules[name] || {})
     })
+    
+    // 保存到本地
+    wx.setStorageSync('employees', employees)
+    wx.setStorageSync('allSchedules', allSchedules)
+    
+    this.setData({ employees, allSchedules })
+    this.updateShiftDisplay()
   },
 
   // 解析指定工作表
