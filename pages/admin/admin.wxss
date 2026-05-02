@@ -451,6 +451,11 @@
   font-size: 30rpx;
   color: #333;
   border: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.menu-item::after {
+  display: none;
 }
 .menu-item:active {
   background: #e9ecf1;
