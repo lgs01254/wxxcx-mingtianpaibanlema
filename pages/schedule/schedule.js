@@ -242,21 +242,31 @@ Page({
     })
   },
   clearMonthSchedules: function () {
-    const { dates } = this.data
-    let schedules = wx.getStorageSync('schedules') || {}
-    dates.forEach(date => {
-      delete schedules[date]
+    wx.showModal({
+      title: '确认清空',
+      content: '确定要清空本月所有排班数据吗？此操作不可撤销！',
+      confirmText: '确定清空',
+      confirmColor: '#FF5252',
+      success: (res) => {
+        if (res.confirm) {
+          const { dates } = this.data
+          let schedules = wx.getStorageSync('schedules') || {}
+          dates.forEach(date => {
+            delete schedules[date]
+          })
+          wx.setStorageSync('schedules', schedules)
+          this.setData({ schedules })
+          wx.showToast({
+            title: '已清空',
+            icon: 'success',
+            duration: 1200
+          })
+          // 刷新网格
+          this.updateDateGrid([], this.data.year, this.data.month)
+          this.setData({ selectedDates: [] })
+        }
+      }
     })
-    wx.setStorageSync('schedules', schedules)
-    this.setData({ schedules })
-    wx.showToast({
-      title: '已清空',
-      icon: 'success',
-      duration: 1200
-    })
-    // 刷新网格
-    this.updateDateGrid([], this.data.year, this.data.month)
-    this.setData({ selectedDates: [] })
   },
   // 长按日期弹出班次选择
   onDateLongPress: function(e) {
