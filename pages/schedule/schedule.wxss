@@ -284,6 +284,8 @@
 /* 导入按钮样式 */
 .import-excel-row {
   margin-bottom: 20rpx;
+  display: flex;
+  flex-direction: row;
 }
 
 .btn-import {
@@ -295,6 +297,13 @@
   font-size: 28rpx;
   border: none;
   box-shadow: 0 4rpx 16rpx rgba(76, 175, 80, 0.3);
+  flex: 1;
+  margin: 0 8rpx;
+}
+
+.btn-import.local {
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+  box-shadow: 0 4rpx 16rpx rgba(255, 152, 0, 0.3);
 }
 
 /* 弹窗遮罩 */
