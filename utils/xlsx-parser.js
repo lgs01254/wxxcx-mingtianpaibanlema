@@ -124,7 +124,7 @@ function parseExcelData(excelData) {
     return null
   }
   
-  const { nameColumnIndex, dateStartIndex, dateHeaders } = analyzeHeaders(headers)
+  const { nameColumnIndex, dateStartIndex, dateHeaders, yearMonth } = analyzeHeaders(headers)
   
   if (dateHeaders.length === 0) {
     return null
@@ -132,29 +132,38 @@ function parseExcelData(excelData) {
   
   const employees = []
   const schedules = {}
-  const currentYearMonth = getCurrentYearMonth()
+  const defaultYearMonth = yearMonth || getCurrentYearMonth()
   
   for (let i = 1; i < excelData.length; i++) {
     const row = excelData[i]
     
-    if (!row || row.length < dateStartIndex + 1) {
+    if (!row || row.length < 2) {
       continue
     }
     
-    const nameValue = row[nameColumnIndex]
-    const employeeName = extractChineseName(String(nameValue))
-    
-    if (!employeeName) {
-      if (isSummaryRow(row)) {
-        continue
-      }
-      const altName = extractChineseName(String(row[0]))
-      if (!altName) {
-        continue
-      }
-      employeeName = altName
+    // 跳过汇总行
+    if (isSummaryRow(row)) {
+      continue
     }
     
+    // 查找该行的姓名
+    let employeeName = null
+    
+    // 遍历该行的所有列，查找汉字姓名
+    for (let col = 0; col < row.length; col++) {
+      const cellValue = String(row[col] || '').trim()
+      const name = extractChineseName(cellValue)
+      if (name) {
+        employeeName = name
+        break
+      }
+    }
+    
+    if (!employeeName) {
+      continue
+    }
+    
+    // 跳过重复员工
     if (employees.includes(employeeName)) {
       continue
     }
@@ -162,25 +171,27 @@ function parseExcelData(excelData) {
     employees.push(employeeName)
     schedules[employeeName] = {}
     
-    let yearMonth = currentYearMonth
-    if (row[2]) {
-      const ym = String(row[2]).trim()
-      if (ym.match(/^\d{4}-\d{1,2}$/)) {
-        yearMonth = ym
+    // 尝试获取该行的年月信息
+    let currentYearMonth = defaultYearMonth
+    for (let col = 0; col < Math.min(5, row.length); col++) {
+      const cellValue = String(row[col] || '').trim()
+      if (cellValue.match(/^\d{4}[-/]\d{1,2}$/)) {
+        currentYearMonth = cellValue.replace('/', '-')
+        break
       }
     }
     
-    let dateIndex = 0
-    for (let j = dateStartIndex; j < row.length && dateIndex < dateHeaders.length; j++) {
+    // 解析该行的排班数据（从日期列开始）
+    for (let j = dateStartIndex; j < row.length && j - dateStartIndex < dateHeaders.length; j++) {
       const shiftText = String(row[j] || '').trim()
+      const dateIndex = j - dateStartIndex
       if (dateHeaders[dateIndex]) {
         const normalizedShift = normalizeShiftName(shiftText)
         if (normalizedShift) {
-          const fullDate = formatDate(yearMonth, dateHeaders[dateIndex])
+          const fullDate = formatDate(currentYearMonth, dateHeaders[dateIndex])
           schedules[employeeName][fullDate] = normalizedShift
         }
       }
-      dateIndex++
     }
   }
   
@@ -200,12 +211,36 @@ function analyzeHeaders(headers) {
   let nameColumnIndex = 0
   let dateStartIndex = 1
   const dateHeaders = []
+  let yearMonth = null
   
+  // 查找姓名列
   for (let i = 0; i < Math.min(5, headers.length); i++) {
     const header = String(headers[i]).trim()
     if (header === '姓名' || header.includes('姓名') && !header.includes('工号') && !header.includes('编号')) {
       nameColumnIndex = i
       break
+    }
+  }
+  
+  // 查找年月信息（可能在表头的任意位置）
+  for (let i = 0; i < Math.min(10, headers.length); i++) {
+    const header = String(headers[i]).trim()
+    const ymMatch = header.match(/(\d{4})[-/](\d{1,2})/)
+    if (ymMatch) {
+      yearMonth = `${ymMatch[1]}-${ymMatch[2].padStart(2, '0')}`
+      break
+    }
+  }
+  
+  // 如果表头没有年月，尝试从第一行的非日期列中查找
+  if (!yearMonth && headers.length > 0) {
+    // 在前几个表头中查找年月
+    for (let i = 0; i < Math.min(10, headers.length); i++) {
+      const header = String(headers[i]).trim()
+      if (/^\d{4}[-/]\d{1,2}$/.test(header)) {
+        yearMonth = header.replace('/', '-')
+        break
+      }
     }
   }
   
@@ -244,7 +279,7 @@ function analyzeHeaders(headers) {
     }
   }
   
-  return { nameColumnIndex, dateStartIndex, dateHeaders }
+  return { nameColumnIndex, dateStartIndex, dateHeaders, yearMonth }
 }
 
 // 检查是否是汇总行
