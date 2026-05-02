@@ -334,6 +334,20 @@ Page({
     wx.showToast({ title: '备注已删除', icon: 'success' });
   },
 
+  // 选择Excel导入方式
+  selectExcelImportType: function() {
+    wx.showActionSheet({
+      itemList: ['从聊天记录导入', '从本地文件导入'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          this.importExcelFromChat()
+        } else {
+          this.importExcelFromLocal()
+        }
+      }
+    })
+  },
+
   // 从聊天记录导入Excel
   importExcelFromChat: function() {
     wx.chooseMessageFile({
