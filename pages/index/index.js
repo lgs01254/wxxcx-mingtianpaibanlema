@@ -403,6 +403,54 @@ Page({
     }, 1500)
   },
 
+  saveAllShareSchedules() {
+    const { shareSelectData, shareSelectYear, shareSelectMonth } = this.data
+
+    if (!shareSelectData) {
+      wx.showToast({ title: '无数据', icon: 'none' })
+      return
+    }
+
+    wx.showModal({
+      title: '保存全部排班',
+      content: `确定要将 ${shareSelectYear}年${shareSelectMonth}月 所有员工的排班保存到管理员面板吗？`,
+      confirmText: '保存',
+      success: (res) => {
+        if (res.confirm) {
+          const employees = wx.getStorageSync('employees') || []
+          const allSchedules = wx.getStorageSync('allSchedules') || {}
+
+          const monthKey = `${shareSelectYear}-${String(shareSelectMonth).padStart(2, '0')}`
+          if (!allSchedules[monthKey]) {
+            allSchedules[monthKey] = {}
+          }
+
+          Object.keys(shareSelectData).forEach(name => {
+            if (!employees.includes(name)) {
+              employees.push(name)
+            }
+            if (!allSchedules[monthKey][name]) {
+              allSchedules[monthKey][name] = {}
+            }
+            Object.keys(shareSelectData[name]).forEach(date => {
+              allSchedules[monthKey][name][date] = shareSelectData[name][date]
+            })
+          })
+
+          wx.setStorageSync('employees', employees)
+          wx.setStorageSync('allSchedules', allSchedules)
+
+          this.setData({
+            showShareSelectPanel: false,
+            shareSelectData: null
+          })
+
+          wx.showToast({ title: '保存成功', icon: 'success' })
+        }
+      }
+    })
+  },
+
   closeShareSelectPanel() {
     this.setData({
       showShareSelectPanel: false,

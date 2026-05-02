@@ -15,6 +15,7 @@
           </view>
         </block>
       </view>
+      <view class="share-select-save-all" bindtap="saveAllShareSchedules">保存全部排班</view>
       <view class="share-select-cancel" bindtap="closeShareSelectPanel">取消</view>
     </view>
   </view>

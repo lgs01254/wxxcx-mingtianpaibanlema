@@ -656,6 +656,14 @@ button {
   color: #333;
   font-weight: 500;
 }
+.share-select-save-all {
+  text-align: center;
+  padding: 24rpx;
+  color: #007AFF;
+  font-size: 28rpx;
+  border-top: 1rpx solid #eee;
+  font-weight: 500;
+}
 .share-select-cancel {
   text-align: center;
   padding: 24rpx;
