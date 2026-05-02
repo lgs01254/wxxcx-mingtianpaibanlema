@@ -420,20 +420,15 @@ Page({
           const employees = wx.getStorageSync('employees') || []
           const allSchedules = wx.getStorageSync('allSchedules') || {}
 
-          const monthKey = `${shareSelectYear}-${String(shareSelectMonth).padStart(2, '0')}`
-          if (!allSchedules[monthKey]) {
-            allSchedules[monthKey] = {}
-          }
-
           Object.keys(shareSelectData).forEach(name => {
             if (!employees.includes(name)) {
               employees.push(name)
             }
-            if (!allSchedules[monthKey][name]) {
-              allSchedules[monthKey][name] = {}
+            if (!allSchedules[name]) {
+              allSchedules[name] = {}
             }
             Object.keys(shareSelectData[name]).forEach(date => {
-              allSchedules[monthKey][name][date] = shareSelectData[name][date]
+              allSchedules[name][date] = shareSelectData[name][date]
             })
           })
 
