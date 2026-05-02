@@ -700,35 +700,43 @@ Page({
   },
 
   // 显示工作表选择弹窗（超过6个工作表时使用）
-  showSheetSelectorModal(sheetList, workbook, fileName) {
+  showSheetSelectorModal(sheetList, workbook, fileName, page = 1) {
     const visibleSheets = sheetList.filter(s => s.isVisible)
+    const itemsPerPage = 5
+    const totalPages = Math.ceil(visibleSheets.length / itemsPerPage)
     
-    // 构建弹窗内容
-    let content = '请选择要读取的工作表：\n\n'
-    visibleSheets.forEach((sheet, index) => {
-      content += `${index + 1}. ${sheet.name}\n`
-    })
-    content += '\n请回复数字（1-' + visibleSheets.length + '）'
+    // 计算当前页的选项
+    const startIndex = (page - 1) * itemsPerPage
+    const endIndex = Math.min(startIndex + itemsPerPage, visibleSheets.length)
+    const currentItems = visibleSheets.slice(startIndex, endIndex)
     
-    wx.showModal({
-      title: '选择工作表',
-      content: content,
-      editable: true,
-      placeholderText: '请输入数字',
+    // 构建选项列表
+    const itemList = currentItems.map((sheet, index) => `${startIndex + index + 1}. ${sheet.name}`)
+    
+    // 添加下一页/完成选项
+    if (page < totalPages) {
+      itemList.push(`下一页 (${page}/${totalPages})`)
+    } else {
+      itemList.push(`完成，共${visibleSheets.length}个工作表`)
+    }
+    
+    wx.showActionSheet({
+      itemList: itemList,
       success: (res) => {
-        if (res.confirm && res.content) {
-          const num = parseInt(res.content.trim())
-          if (num >= 1 && num <= visibleSheets.length) {
-            const selectedSheet = visibleSheets[num - 1]
-            this.parseExcelSheet(workbook, selectedSheet.name, fileName)
-          } else {
-            wx.showToast({ title: '请输入正确的数字', icon: 'none' })
-            // 再次弹出选择
-            setTimeout(() => {
-              this.showSheetSelectorModal(sheetList, workbook, fileName)
-            }, 1500)
+        const selectedIndex = res.tapIndex
+        
+        // 点击了下一页
+        if (selectedIndex === currentItems.length) {
+          if (page < totalPages) {
+            this.showSheetSelectorModal(sheetList, workbook, fileName, page + 1)
           }
+          return
         }
+        
+        // 点击了工作表
+        const sheetIndex = startIndex + selectedIndex
+        const selectedSheet = visibleSheets[sheetIndex]
+        this.parseExcelSheet(workbook, selectedSheet.name, fileName)
       },
       fail: () => {
         wx.showToast({ title: '选择取消', icon: 'none' })
