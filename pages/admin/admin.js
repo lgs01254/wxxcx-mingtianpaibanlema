@@ -24,6 +24,7 @@ Page({
     isParsingExcel: false, // 是否正在解析Excel
     currentExcelFilePath: '', // 当前Excel文件路径
     currentExcelFileName: '', // 当前Excel文件名
+    selectedMap: {}, // 选中的员工映射（批量操作）
     selectedEmployees: [], // 选中的员工列表（批量操作）
     isSelectAll: false // 是否全选
   },
@@ -157,33 +158,42 @@ Page({
   // 切换员工选择
   toggleEmployeeSelect(e) {
     const name = e.currentTarget.dataset.name
+    const selectedMap = { ...this.data.selectedMap }
     const selectedEmployees = [...this.data.selectedEmployees]
-    const index = selectedEmployees.indexOf(name)
     
-    if (index > -1) {
-      selectedEmployees.splice(index, 1)
+    if (selectedMap[name]) {
+      delete selectedMap[name]
+      const index = selectedEmployees.indexOf(name)
+      if (index > -1) {
+        selectedEmployees.splice(index, 1)
+      }
     } else {
+      selectedMap[name] = true
       selectedEmployees.push(name)
     }
     
     // 更新全选状态
     const isSelectAll = selectedEmployees.length === this.data.employees.length && this.data.employees.length > 0
     
-    this.setData({ selectedEmployees, isSelectAll })
+    this.setData({ selectedMap, selectedEmployees, isSelectAll })
   },
 
   // 切换全选
   toggleSelectAll() {
     if (this.data.isSelectAll) {
-      this.setData({ selectedEmployees: [], isSelectAll: false })
+      this.setData({ selectedMap: {}, selectedEmployees: [], isSelectAll: false })
     } else {
-      this.setData({ selectedEmployees: [...this.data.employees], isSelectAll: true })
+      const selectedMap = {}
+      this.data.employees.forEach(name => {
+        selectedMap[name] = true
+      })
+      this.setData({ selectedMap, selectedEmployees: [...this.data.employees], isSelectAll: true })
     }
   },
 
   // 清除选择
   clearSelection() {
-    this.setData({ selectedEmployees: [], isSelectAll: false })
+    this.setData({ selectedMap: {}, selectedEmployees: [], isSelectAll: false })
   },
 
   // 确认批量删除
@@ -223,6 +233,7 @@ Page({
     this.setData({ 
       employees, 
       allSchedules, 
+      selectedMap: {}, 
       selectedEmployees: [], 
       isSelectAll: false 
     })
