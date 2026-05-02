@@ -2,7 +2,7 @@
 <view class="container">
   <!-- 导入Excel按钮 -->
   <view class="import-excel-row">
-    <button class="btn-import" bindtap="importExcelSchedule">📥 导入Excel排班</button>
+    <button class="btn-import" bindtap="importExcelSchedule">📥 从聊天记录选择Excel</button>
   </view>
   <view class="schedule-type-selector">
     <radio-group class="radio-row" bindchange="changeScheduleType" style="position: relative; left: 1rpx; top: -22rpx; width: 740rpx; display: flex; box-sizing: border-box; height: 191rpx">
