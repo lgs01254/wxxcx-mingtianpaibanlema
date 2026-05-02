@@ -374,57 +374,8 @@ Page({
     })
   },
 
-  // 从聊天记录导入Excel
-  importExcelFromChat: function() {
-    wx.chooseMessageFile({
-      count: 1,
-      type: 'file',
-      extension: ['xlsx', 'xls', 'csv'],
-      success: (res) => {
-        const filePath = res.tempFiles[0].path
-        const fileName = res.tempFiles[0].name
-
-        wx.showLoading({ title: '正在读取文件...' })
-
-        xlsxParser.readExcelWithSheets(filePath)
-          .then(({ workbook, sheetList }) => {
-            wx.hideLoading()
-
-            const visibleSheets = sheetList.filter(s => s.isVisible)
-
-            if (visibleSheets.length === 0) {
-              wx.showToast({ title: '没有可见的工作表', icon: 'none' })
-              return
-            }
-
-            this.setData({
-              currentWorkbook: workbook,
-              currentExcelFileName: fileName
-            })
-
-            if (visibleSheets.length === 1) {
-              this.parseSheetAndShowEmployeeSelector(workbook, visibleSheets[0].name, fileName)
-            } else {
-              this.showSheetSelectorModal(sheetList, workbook, fileName)
-            }
-          })
-          .catch((error) => {
-            wx.hideLoading()
-            wx.showModal({
-              title: '读取失败',
-              content: '无法读取Excel文件，请检查文件格式是否正确',
-              showCancel: false
-            })
-          })
-      },
-      fail: () => {
-        wx.showToast({ title: '选择取消', icon: 'none' })
-      }
-    })
-  },
-
-  // 从本地文件导入Excel
-  importExcelFromLocal: function() {
+  // 导入Excel（统一入口）
+  importExcel: function() {
     wx.chooseMessageFile({
       count: 1,
       type: 'file',

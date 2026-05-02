@@ -528,20 +528,6 @@ Page({
 
   // 选择Excel文件
   selectExcelFile() {
-    wx.showActionSheet({
-      itemList: ['从微信聊天记录选择', '从本地文件选择'],
-      success: (res) => {
-        if (res.tapIndex === 0) {
-          this.chooseExcelFromChat()
-        } else {
-          this.chooseExcelFromLocal()
-        }
-      }
-    })
-  },
-
-  // 从微信聊天记录选择Excel文件
-  chooseExcelFromChat() {
     wx.chooseMessageFile({
       count: 1,
       type: 'file',
@@ -552,24 +538,14 @@ Page({
           const fileInfo = tempFiles[0]
           const filePath = fileInfo.path
           const fileName = fileInfo.name
-          const fileSize = fileInfo.size
-          
-          console.log('选择的文件信息:', {
-            name: fileName,
-            path: filePath,
-            size: fileSize
-          })
-          
+
           wx.showLoading({ title: '正在读取文件...' })
-          
-          // 判断文件类型
+
           const isCSV = fileName.toLowerCase().endsWith('.csv')
-          
+
           if (isCSV) {
-            // CSV文件可以直接读取解析
             this.readCSVFile(filePath, fileName)
           } else {
-            // xlsx/xls文件需要第三方库解析，这里演示处理
             wx.showLoading({ title: '正在解析Excel...' })
             setTimeout(() => {
               // 读取文件内容（微信小程序不支持直接读取，需要借助服务端或第三方库）
@@ -589,49 +565,6 @@ Page({
     })
   },
 
-  // 从本地文件选择Excel
-  chooseExcelFromLocal() {
-    wx.chooseMessageFile({
-      count: 1,
-      type: 'file',
-      extension: ['xlsx', 'xls', 'csv'],
-      success: (res) => {
-        const tempFiles = res.tempFiles
-        if (tempFiles && tempFiles.length > 0) {
-          const fileInfo = tempFiles[0]
-          const filePath = fileInfo.path
-          const fileName = fileInfo.name
-          const fileSize = fileInfo.size
-          
-          console.log('本地文件信息:', {
-            name: fileName,
-            path: filePath,
-            size: fileSize
-          })
-          
-          wx.showLoading({ title: '正在读取文件...' })
-          
-          const isCSV = fileName.toLowerCase().endsWith('.csv')
-          
-          if (isCSV) {
-            this.readCSVFile(filePath, fileName)
-          } else {
-            wx.showLoading({ title: '正在解析Excel...' })
-            setTimeout(() => {
-              this.processExcelFile(filePath, fileName)
-            }, 500)
-          }
-        }
-      },
-      fail: (err) => {
-        console.error('选择本地文件失败:', err)
-        if (!err.errMsg.includes('cancel')) {
-          wx.showToast({ title: '选择文件失败', icon: 'none' })
-        }
-      }
-    })
-  },
-  
   // 读取CSV文件
   readCSVFile(filePath, fileName) {
     wx.showLoading({ title: '正在解析CSV...' })
