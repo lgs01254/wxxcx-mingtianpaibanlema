@@ -680,17 +680,58 @@ Page({
   // 显示工作表选择器
   showSheetSelector(sheetList, workbook, fileName) {
     const visibleSheets = sheetList.filter(s => s.isVisible)
-    const sheetNames = visibleSheets.map(s => s.name)
     
-    wx.showActionSheet({
-      itemList: sheetNames,
+    // 如果工作表数量超过6个，使用自定义弹窗
+    if (visibleSheets.length > 6) {
+      this.showSheetSelectorModal(visibleSheets, workbook, fileName)
+    } else {
+      const sheetNames = visibleSheets.map(s => s.name)
+      wx.showActionSheet({
+        itemList: sheetNames,
+        success: (res) => {
+          const selectedSheet = visibleSheets[res.tapIndex]
+          this.parseExcelSheet(workbook, selectedSheet.name, fileName)
+        },
+        fail: (err) => {
+          console.error('选择工作表失败:', err)
+        }
+      })
+    }
+  },
+
+  // 显示工作表选择弹窗（超过6个工作表时使用）
+  showSheetSelectorModal(sheetList, workbook, fileName) {
+    const visibleSheets = sheetList.filter(s => s.isVisible)
+    
+    // 构建弹窗内容
+    let content = '请选择要读取的工作表：\n\n'
+    visibleSheets.forEach((sheet, index) => {
+      content += `${index + 1}. ${sheet.name}\n`
+    })
+    content += '\n请回复数字（1-' + visibleSheets.length + '）'
+    
+    wx.showModal({
+      title: '选择工作表',
+      content: content,
+      editable: true,
+      placeholderText: '请输入数字',
       success: (res) => {
-        const selectedSheet = visibleSheets[res.tapIndex]
-        console.log('选择的工作表:', selectedSheet)
-        this.parseExcelSheet(workbook, selectedSheet.name, fileName)
+        if (res.confirm && res.content) {
+          const num = parseInt(res.content.trim())
+          if (num >= 1 && num <= visibleSheets.length) {
+            const selectedSheet = visibleSheets[num - 1]
+            this.parseExcelSheet(workbook, selectedSheet.name, fileName)
+          } else {
+            wx.showToast({ title: '请输入正确的数字', icon: 'none' })
+            // 再次弹出选择
+            setTimeout(() => {
+              this.showSheetSelectorModal(sheetList, workbook, fileName)
+            }, 1500)
+          }
+        }
       },
-      fail: (err) => {
-        console.error('选择工作表失败:', err)
+      fail: () => {
+        wx.showToast({ title: '选择取消', icon: 'none' })
       }
     })
   },
