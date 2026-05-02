@@ -115,7 +115,7 @@
         <text>分享排班</text>
       </view>
       <view class="menu-item" bindtap="loadEmployeeToLocal">
-        <text>加载到本地</text>
+        <text>加载到主页</text>
       </view>
       <view class="menu-item" bindtap="editEmployee">
         <text>编辑姓名</text>
