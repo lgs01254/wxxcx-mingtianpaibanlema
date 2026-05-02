@@ -393,6 +393,32 @@ Page({
     }
   },
 
+  // 分享单个员工排班
+  shareEmployeeSchedule() {
+    if (!this.data.currentEmployeeName) {
+      wx.showToast({ title: '请选择员工', icon: 'none' })
+      return
+    }
+    
+    // 调用微信分享
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline']
+    })
+    
+    // 保存当前要分享的员工
+    this.setData({
+      shareEmployee: this.data.currentEmployeeName
+    })
+    
+    // 模拟点击分享按钮（小程序限制，需要用户手动点击）
+    wx.showToast({ 
+      title: '请点击右上角分享', 
+      icon: 'none',
+      duration: 2000
+    })
+  },
+
   // 选择Excel文件
   selectExcelFile() {
     wx.showActionSheet({
