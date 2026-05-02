@@ -29,8 +29,11 @@
       <view wx:if="{{employees.length === 0}}" class="empty-tip">暂无员工，请添加</view>
     </view>
     <view class="action-buttons">
-      <button class="excel-import-btn" bindtap="selectExcelFile" disabled="{{isParsingExcel}}">
-        📊 导入Excel排班
+      <button class="excel-import-btn" bindtap="chooseExcelFromChat" disabled="{{isParsingExcel}}">
+        💬 从聊天记录导入
+      </button>
+      <button class="excel-import-btn local" bindtap="chooseExcelFromLocal" disabled="{{isParsingExcel}}">
+        📁 从本地文件导入
       </button>
       <button class="share-all-btn" open-type="share" data-all="true">分享全部员工排班</button>
     </view>
