@@ -1,5 +1,6 @@
 // schedule.js
 const util = require('../../utils/util.js')
+const xlsxParser = require('../../utils/xlsx-parser')
 Page({
   data: {
     dates: [], // 日期列表
@@ -30,6 +31,17 @@ Page({
     remarkDate: '', // 当前备注的日期
     remarkContent: '', // 备注内容
     remarks: {}, // 备注数据
+    // Excel导入相关数据
+    showSheetSelector: false, // 是否显示工作表选择器
+    sheetList: [], // 工作表列表
+    selectedSheets: {}, // 选中的工作表映射
+    isSelectAllSheets: false, // 是否全选工作表
+    currentWorkbook: null, // 当前工作簿
+    currentExcelFileName: '', // 当前Excel文件名
+    showEmployeeSelector: false, // 是否显示员工选择器
+    parsedEmployees: [], // 解析出的员工列表
+    selectedParsedEmployees: [], // 选中的解析员工
+    selectedParsedMap: {}, // 选中的解析员工映射
   },
   onLoad: function (options) {
     let year, month
@@ -320,5 +332,237 @@ Page({
     wx.setStorageSync('remarks', remarks);
     this.setData({ remarks, showRemarkModal: false });
     wx.showToast({ title: '备注已删除', icon: 'success' });
+  },
+
+  // 导入Excel排班
+  importExcelSchedule: function() {
+    wx.chooseMessageFile({
+      count: 1,
+      type: 'file',
+      extension: ['xlsx', 'xls', 'csv'],
+      success: (res) => {
+        const filePath = res.tempFiles[0].path
+        const fileName = res.tempFiles[0].name
+        
+        wx.showLoading({ title: '正在读取文件...' })
+        
+        xlsxParser.readExcelWithSheets(filePath)
+          .then(({ workbook, sheetList }) => {
+            wx.hideLoading()
+            
+            const visibleSheets = sheetList.filter(s => s.isVisible)
+            
+            if (visibleSheets.length === 0) {
+              wx.showToast({ title: '没有可见的工作表', icon: 'none' })
+              return
+            }
+            
+            this.setData({
+              currentWorkbook: workbook,
+              currentExcelFileName: fileName
+            })
+            
+            if (visibleSheets.length === 1) {
+              this.parseSheetAndShowEmployeeSelector(workbook, visibleSheets[0].name, fileName)
+            } else {
+              this.showSheetSelectorModal(sheetList, workbook, fileName)
+            }
+          })
+          .catch((error) => {
+            wx.hideLoading()
+            wx.showModal({
+              title: '读取失败',
+              content: '无法读取Excel文件，请检查文件格式是否正确',
+              showCancel: false
+            })
+          })
+      },
+      fail: () => {
+        wx.showToast({ title: '选择取消', icon: 'none' })
+      }
+    })
+  },
+
+  // 显示工作表选择弹窗
+  showSheetSelectorModal: function(sheetList, workbook, fileName) {
+    const visibleSheets = sheetList.filter(s => s.isVisible)
+    
+    const selectedSheets = {}
+    visibleSheets.forEach(sheet => {
+      selectedSheets[sheet.name] = false
+    })
+    
+    this.setData({
+      sheetList: visibleSheets,
+      selectedSheets,
+      isSelectAllSheets: false,
+      showSheetSelector: true
+    })
+  },
+
+  // 切换工作表选择
+  toggleSheetSelect: function(e) {
+    const name = e.currentTarget.dataset.name
+    const selectedSheets = { ...this.data.selectedSheets }
+    
+    selectedSheets[name] = !selectedSheets[name]
+    
+    const allSelected = this.data.sheetList.every(sheet => selectedSheets[sheet.name])
+    
+    this.setData({ selectedSheets, isSelectAllSheets: allSelected })
+  },
+
+  // 切换全选工作表
+  toggleSelectAllSheets: function() {
+    if (this.data.isSelectAllSheets) {
+      const selectedSheets = {}
+      this.data.sheetList.forEach(sheet => {
+        selectedSheets[sheet.name] = false
+      })
+      this.setData({ selectedSheets, isSelectAllSheets: false })
+    } else {
+      const selectedSheets = {}
+      this.data.sheetList.forEach(sheet => {
+        selectedSheets[sheet.name] = true
+      })
+      this.setData({ selectedSheets, isSelectAllSheets: true })
+    }
+  },
+
+  // 关闭工作表选择器
+  closeSheetSelector: function() {
+    this.setData({ showSheetSelector: false })
+  },
+
+  // 确认工作表选择
+  confirmSheetSelection: function() {
+    const selectedSheetNames = Object.keys(this.data.selectedSheets).filter(name => this.data.selectedSheets[name])
+    
+    if (selectedSheetNames.length === 0) {
+      wx.showToast({ title: '请至少选择一个工作表', icon: 'none' })
+      return
+    }
+    
+    this.setData({ showSheetSelector: false })
+    
+    // 解析第一个选中的工作表并显示员工选择器
+    this.parseSheetAndShowEmployeeSelector(this.data.currentWorkbook, selectedSheetNames[0], this.data.currentExcelFileName)
+  },
+
+  // 解析工作表并显示员工选择器
+  parseSheetAndShowEmployeeSelector: function(workbook, sheetName, fileName) {
+    wx.showLoading({ title: '正在解析...' })
+    
+    try {
+      const excelData = xlsxParser.readSheetData(workbook, sheetName)
+      const parsedData = xlsxParser.parseExcelData(excelData)
+      
+      wx.hideLoading()
+      
+      if (!parsedData || !parsedData.employees || parsedData.employees.length === 0) {
+        wx.showToast({ title: '未识别到有效数据', icon: 'none' })
+        return
+      }
+      
+      // 显示员工选择器
+      const selectedParsedMap = {}
+      parsedData.employees.forEach(name => {
+        selectedParsedMap[name] = false
+      })
+      
+      this.setData({
+        parsedEmployees: parsedData.employees,
+        parsedSchedules: parsedData.schedules,
+        selectedParsedMap,
+        selectedParsedEmployees: [],
+        showEmployeeSelector: true
+      })
+    } catch (error) {
+      wx.hideLoading()
+      wx.showToast({ title: '解析失败', icon: 'none' })
+    }
+  },
+
+  // 切换解析员工选择
+  toggleParsedEmployeeSelect: function(e) {
+    const name = e.currentTarget.dataset.name
+    const selectedParsedMap = { ...this.data.selectedParsedMap }
+    const selectedParsedEmployees = [...this.data.selectedParsedEmployees]
+    
+    if (selectedParsedMap[name]) {
+      delete selectedParsedMap[name]
+      const index = selectedParsedEmployees.indexOf(name)
+      if (index > -1) {
+        selectedParsedEmployees.splice(index, 1)
+      }
+    } else {
+      selectedParsedMap[name] = true
+      selectedParsedEmployees.push(name)
+    }
+    
+    const isSelectAllParsed = selectedParsedEmployees.length === this.data.parsedEmployees.length && this.data.parsedEmployees.length > 0
+    
+    this.setData({ selectedParsedMap, selectedParsedEmployees, isSelectAllParsed })
+  },
+
+  // 全选/取消全选解析员工
+  toggleSelectAllParsedEmployees: function() {
+    if (this.data.isSelectAllParsed) {
+      const selectedParsedMap = {}
+      this.data.parsedEmployees.forEach(name => {
+        selectedParsedMap[name] = false
+      })
+      this.setData({ selectedParsedMap, selectedParsedEmployees: [], isSelectAllParsed: false })
+    } else {
+      const selectedParsedMap = {}
+      this.data.parsedEmployees.forEach(name => {
+        selectedParsedMap[name] = true
+      })
+      this.setData({ selectedParsedMap, selectedParsedEmployees: [...this.data.parsedEmployees], isSelectAllParsed: true })
+    }
+  },
+
+  // 关闭员工选择器
+  closeEmployeeSelector: function() {
+    this.setData({ showEmployeeSelector: false })
+  },
+
+  // 确认导入选中的员工排班
+  confirmImportEmployees: function() {
+    const { selectedParsedEmployees, parsedSchedules, year, month } = this.data
+    
+    if (selectedParsedEmployees.length === 0) {
+      wx.showToast({ title: '请至少选择一个员工', icon: 'none' })
+      return
+    }
+    
+    // 获取当前本地的排班数据
+    let schedules = wx.getStorageSync('schedules') || {}
+    if (typeof schedules !== 'object' || Array.isArray(schedules)) {
+      schedules = {}
+    }
+    
+    // 导入选中员工的排班
+    selectedParsedEmployees.forEach(name => {
+      const employeeSchedules = parsedSchedules[name] || {}
+      Object.keys(employeeSchedules).forEach(date => {
+        // 只导入当月的数据
+        if (date.startsWith(`${year}-${String(month).padStart(2, '0')}`)) {
+          schedules[date] = employeeSchedules[date]
+        }
+      })
+    })
+    
+    wx.setStorageSync('schedules', schedules)
+    
+    this.setData({ 
+      schedules,
+      showEmployeeSelector: false,
+      selectedDates: []
+    })
+    
+    this.updateDateGrid([], year, month)
+    
+    wx.showToast({ title: '导入成功', icon: 'success' })
   }
 })

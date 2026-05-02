@@ -1,5 +1,9 @@
 <!--schedule.wxml-->
 <view class="container">
+  <!-- 导入Excel按钮 -->
+  <view class="import-excel-row">
+    <button class="btn-import" bindtap="importExcelSchedule">📥 导入Excel排班</button>
+  </view>
   <view class="schedule-type-selector">
     <radio-group class="radio-row" bindchange="changeScheduleType" style="position: relative; left: 1rpx; top: -22rpx; width: 740rpx; display: flex; box-sizing: border-box; height: 191rpx">
       <label wx:for="{{scheduleTypes}}" wx:key="type" style="display: flex; align-items: center;">
@@ -44,6 +48,65 @@
     <view class="remark-buttons">
       <button class="btn-danger" bindtap="deleteRemark">删除</button>
       <button class="btn-primary" bindtap="saveRemark">保存</button>
+    </view>
+  </view>
+
+  <!-- 工作表选择弹窗 -->
+  <view class="popup-mask" wx:if="{{showSheetSelector}}" bindtap="closeSheetSelector"></view>
+  <view class="sheet-selector-popup" wx:if="{{showSheetSelector}}">
+    <view class="sheet-selector-header">
+      <view class="sheet-selector-title">选择工作表</view>
+      <view class="sheet-selector-subtitle">共 {{sheetList.length}} 个工作表</view>
+    </view>
+    <view class="sheet-selector-list">
+      <view class="sheet-selector-all" bindtap="toggleSelectAllSheets">
+        <view class="checkbox" catchtap="toggleSelectAllSheets">
+          <view class="checkbox-inner" wx:if="{{isSelectAllSheets}}">✓</view>
+        </view>
+        <text>{{isSelectAllSheets ? '取消全选' : '全选'}}</text>
+      </view>
+      <block wx:for="{{sheetList}}" wx:key="name">
+        <view class="sheet-tag" bindtap="toggleSheetSelect" data-name="{{item.name}}">
+          <view class="checkbox" catchtap="toggleSheetSelect" data-name="{{item.name}}">
+            <view class="checkbox-inner" wx:if="{{selectedSheets[item.name]}}">✓</view>
+          </view>
+          <text class="sheet-name">{{item.name}}</text>
+          <text class="sheet-status" wx:if="{{!item.isVisible}}">（隐藏）</text>
+        </view>
+      </block>
+    </view>
+    <view class="sheet-selector-actions">
+      <view class="sheet-btn cancel" bindtap="closeSheetSelector">取消</view>
+      <view class="sheet-btn confirm" bindtap="confirmSheetSelection">确认</view>
+    </view>
+  </view>
+
+  <!-- 员工选择弹窗 -->
+  <view class="popup-mask" wx:if="{{showEmployeeSelector}}" bindtap="closeEmployeeSelector"></view>
+  <view class="employee-selector-popup" wx:if="{{showEmployeeSelector}}">
+    <view class="employee-selector-header">
+      <view class="employee-selector-title">选择员工</view>
+      <view class="employee-selector-subtitle">共 {{parsedEmployees.length}} 名员工</view>
+    </view>
+    <view class="employee-selector-list">
+      <view class="employee-selector-all" bindtap="toggleSelectAllParsedEmployees">
+        <view class="checkbox" catchtap="toggleSelectAllParsedEmployees">
+          <view class="checkbox-inner" wx:if="{{isSelectAllParsed}}">✓</view>
+        </view>
+        <text>{{isSelectAllParsed ? '取消全选' : '全选'}}</text>
+      </view>
+      <block wx:for="{{parsedEmployees}}" wx:key="item">
+        <view class="employee-tag" bindtap="toggleParsedEmployeeSelect" data-name="{{item}}">
+          <view class="checkbox" catchtap="toggleParsedEmployeeSelect" data-name="{{item}}">
+            <view class="checkbox-inner" wx:if="{{selectedParsedMap[item]}}">✓</view>
+          </view>
+          <text class="employee-name">{{item}}</text>
+        </view>
+      </block>
+    </view>
+    <view class="employee-selector-actions">
+      <view class="sheet-btn cancel" bindtap="closeEmployeeSelector">取消</view>
+      <view class="sheet-btn confirm" bindtap="confirmImportEmployees">确认导入</view>
     </view>
   </view>
 </view>
