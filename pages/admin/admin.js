@@ -438,6 +438,10 @@ Page({
       if (!employee && this.data.shareEmployee) {
         employee = this.data.shareEmployee
       }
+      
+      if (!employee && this.data.currentEmployeeName) {
+        employee = this.data.currentEmployeeName
+      }
 
       if (!employee) {
         return {
