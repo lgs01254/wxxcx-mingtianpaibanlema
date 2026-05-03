@@ -29,6 +29,7 @@ Page({
     isSelectAll: false, // 是否全选
     showSheetSelector: false, // 是否显示工作表选择器
     sheetList: [], // 工作表列表
+    shareEmployee: '', // 当前要分享的员工
     selectedSheets: {}, // 选中的工作表映射
     isSelectAllSheets: false, // 是否全选工作表
     currentWorkbook: null, // 当前工作簿
