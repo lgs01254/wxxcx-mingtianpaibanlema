@@ -111,9 +111,9 @@
   <view class="employee-menu-popup" wx:if="{{showEmployeeMenu}}">
     <view class="menu-title">{{currentEmployeeName}}</view>
     <view class="menu-list">
-      <view class="menu-item" bindtap="shareEmployeeSchedule">
+      <button class="menu-item share-btn" open-type="share" data-employee="{{currentEmployeeName}}" data-share-type="single">
         <text>分享排班</text>
-      </view>
+      </button>
       <view class="menu-item" bindtap="loadEmployeeToLocal">
         <text>加载到主页</text>
       </view>
