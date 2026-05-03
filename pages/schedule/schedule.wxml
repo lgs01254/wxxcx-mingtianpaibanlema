@@ -1,8 +1,9 @@
 <!--schedule.wxml-->
 <view class="container">
-  <!-- 导入Excel按钮 -->
+  <!-- 导入Excel按钮和分享按钮 -->
   <view class="import-excel-row">
     <button class="btn-import" bindtap="importExcel">📥 导入Excel排班</button>
+    <button class="btn-share" open-type="share" data-share-type="monthSchedule">📤 分享排班</button>
   </view>
   <view class="schedule-type-selector">
     <radio-group class="radio-row" bindchange="changeScheduleType" style="position: relative; left: 1rpx; top: -22rpx; width: 740rpx; display: flex; box-sizing: border-box; height: 191rpx">

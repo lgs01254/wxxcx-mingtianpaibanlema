@@ -41,9 +41,6 @@ Page({
     this.loadShiftTypes()
     this.setCurrentMonth(new Date())
     this.updateShiftDisplay()
-    console.log('onLoad - employees:', this.data.employees)
-    console.log('onLoad - dateHeaders:', this.data.dateHeaders)
-    console.log('onLoad - allSchedules:', this.data.allSchedules)
   },
 
   selectShiftType(e) {
@@ -60,8 +57,6 @@ Page({
       wx.showToast({ title: '请先选择班次', icon: 'none' })
       return
     }
-
-    console.log('setShift:', { emp, date, type })
 
     let allSchedules = JSON.parse(JSON.stringify(this.data.allSchedules))
     if (!allSchedules[emp]) allSchedules[emp] = {}
@@ -94,7 +89,6 @@ Page({
         shiftColors[emp][date] = shift !== '-' ? (colorMap[shift] || '#007AFF') : ''
       })
     })
-    console.log('updateShiftDisplay:', JSON.stringify(shiftDisplay))
     this.setData({ shiftDisplay, shiftColors })
   },
 
@@ -374,7 +368,6 @@ Page({
   getShiftText(employee, date) {
     const allSchedules = this.data.allSchedules
     const val = (allSchedules[employee] && allSchedules[employee][date]) || '-'
-    console.log('getShiftText called:', { employee, date, val, hasEmployee: !!allSchedules[employee], employeeData: allSchedules[employee] })
     return val
   },
 
@@ -390,27 +383,18 @@ Page({
 
   shareEmployee(e) {
     const employee = e.currentTarget.dataset.employee
-    console.log('shareEmployee called:', employee)
     this.setData({ shareEmployee: employee })
   },
 
   onShareAppMessage(e) {
-    console.log('=== onShareAppMessage called ===')
-    console.log('e.from:', e.from)
-    console.log('e.target:', e.target)
-    console.log('e.target.dataset:', e.target ? e.target.dataset : 'null')
-    console.log('e.detail:', e.detail)
-
-    const monthStr = this.data.currentMonth // 如 "2026年5月"
+    const monthStr = this.data.currentMonth
     const monthParts = monthStr.match(/(\d+)年(\d+)月/)
     const year = monthParts[1]
     const month = monthParts[2]
 
-    // 判断是分享全部还是分享单个
     const isShareAll = e.target && e.target.dataset && e.target.dataset.all === 'true'
 
     if (isShareAll) {
-      // 分享全部员工
       const employees = this.data.employees
       const allSchedules = this.data.allSchedules
       
@@ -435,9 +419,6 @@ Page({
       const schedulesStr = JSON.stringify(allMonthSchedules)
       const encodedSchedules = encodeURIComponent(schedulesStr)
 
-      console.log('=== Share All Data ===')
-      console.log('allMonthSchedules:', schedulesStr)
-
       return {
         title: `${monthStr}全员工排班表`,
         path: `/pages/index/index?share=all&year=${year}&month=${month}&schedules=${encodedSchedules}`,
@@ -449,15 +430,16 @@ Page({
         }
       }
     } else {
-      // 分享单个员工
       let employee = ''
       if (e.target && e.target.dataset && e.target.dataset.employee) {
         employee = e.target.dataset.employee
-        console.log('Got employee from target.dataset:', employee)
+      }
+      
+      if (!employee && this.data.shareEmployee) {
+        employee = this.data.shareEmployee
       }
 
       if (!employee) {
-        console.error('onShareAppMessage: employee is empty')
         return {
           title: '排班分享',
           path: '/pages/index/index'
@@ -479,13 +461,8 @@ Page({
         }
       }
 
-      // 将数据编码到分享路径中（方案一）
       const schedulesStr = JSON.stringify(monthSchedules)
       const encodedSchedules = encodeURIComponent(schedulesStr)
-      
-      console.log('=== Share Data ===')
-      console.log('employee:', employee)
-      console.log('monthSchedules:', schedulesStr)
 
       return {
         title: `${employee}${monthStr}排班表`,
@@ -555,10 +532,7 @@ Page({
         }
       },
       fail: (err) => {
-        console.error('选择文件失败:', err)
-        if (err.errMsg.includes('cancel')) {
-          // 用户取消选择，不提示
-        } else {
+        if (!err.errMsg.includes('cancel')) {
           wx.showToast({ title: '选择文件失败', icon: 'none' })
         }
       }
@@ -574,8 +548,6 @@ Page({
       filePath: filePath,
       encoding: 'utf-8',
       success: (res) => {
-        console.log('CSV文件读取成功，数据长度:', res.data.length)
-        
         try {
           const csvData = res.data
           const parsedData = this.parseCSVData(csvData)
@@ -586,14 +558,12 @@ Page({
             wx.showToast({ title: '未能识别到有效数据', icon: 'none' })
           }
         } catch (error) {
-          console.error('解析CSV失败:', error)
           wx.showToast({ title: '解析CSV失败', icon: 'none' })
         }
         
         wx.hideLoading()
       },
       fail: (err) => {
-        console.error('读取CSV文件失败:', err)
         wx.hideLoading()
         wx.showToast({ title: '读取文件失败', icon: 'none' })
       }
@@ -706,7 +676,6 @@ Page({
     
     xlsxParser.readExcelWithSheets(filePath)
       .then(({ workbook, sheetList }) => {
-        console.log('Excel解析成功，工作表列表:', sheetList)
         wx.hideLoading()
         
         // 保存文件信息
@@ -732,7 +701,6 @@ Page({
         }
       })
       .catch((error) => {
-        console.error('解析Excel失败:', error)
         wx.hideLoading()
         wx.showModal({
           title: '解析失败',
@@ -871,7 +839,6 @@ Page({
     
     try {
       const excelData = xlsxParser.readSheetData(workbook, sheetName)
-      console.log(`工作表 ${sheetName} 解析成功，数据:`, excelData)
       
       // 解析Excel数据为排班格式
       const parsedData = xlsxParser.parseExcelData(excelData)
@@ -884,7 +851,6 @@ Page({
         wx.showToast({ title: '未能识别到有效数据', icon: 'none' })
       }
     } catch (error) {
-      console.error('解析工作表失败:', error)
       wx.hideLoading()
       wx.showModal({
         title: '解析失败',
