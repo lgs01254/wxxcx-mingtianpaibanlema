@@ -20,6 +20,41 @@
     </view>
   </view>
 
+  <!-- 单人分享排班信息面板 -->
+  <view wx:if="{{showSingleSharePanel}}" class="share-select-mask">
+    <view class="single-share-panel">
+      <view class="single-share-header">
+        <text class="single-share-title">{{singleShareEmployee}}的{{singleShareYear}}年{{singleShareMonth}}月排班</text>
+      </view>
+      <scroll-view class="single-share-content" scroll-y>
+        <view class="schedule-grid">
+          <view class="schedule-week-row">
+            <view class="schedule-week-day">日</view>
+            <view class="schedule-week-day">一</view>
+            <view class="schedule-week-day">二</view>
+            <view class="schedule-week-day">三</view>
+            <view class="schedule-week-day">四</view>
+            <view class="schedule-week-day">五</view>
+            <view class="schedule-week-day">六</view>
+          </view>
+          <view class="schedule-dates">
+            <block wx:for="{{getMonthDays(singleShareYear, singleShareMonth)}}" wx:key="index">
+              <view wx:if="{{item.day}}" class="schedule-date-item">
+                <view class="schedule-date-num">{{item.day}}</view>
+                <view class="schedule-shift" wx:if="{{singleShareSchedules[item.date]}}" style="background:{{getShiftColor(singleShareSchedules[item.date])}}">{{singleShareSchedules[item.date]}}</view>
+              </view>
+              <view wx:else class="schedule-date-item empty"></view>
+            </block>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="single-share-footer">
+        <view class="single-share-cancel" bindtap="closeSingleSharePanel">取消</view>
+        <view class="single-share-load" bindtap="loadSingleShareToHome">加载到主页</view>
+      </view>
+    </view>
+  </view>
+
   <!-- 员工模式标题 -->
   <view wx:if="{{isEmployeeMode}}" class="employee-title">
     {{employeeName}}的{{currentMonth}}排班

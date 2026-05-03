@@ -72,7 +72,13 @@ Page({
     shareSelectData: null,        // 待选择的员工数据
     shareSelectYear: null,        // 分享数据的年份
     shareSelectMonth: null,       // 分享数据的月份
-    shareSelectEmployees: []      // 分享数据的员工名单
+    shareSelectEmployees: [],     // 分享数据的员工名单
+    // 单人分享数据
+    showSingleSharePanel: false,  // 是否显示单人分享面板
+    singleShareEmployee: '',      // 分享的员工姓名
+    singleShareYear: null,        // 分享数据的年份
+    singleShareMonth: null,       // 分享数据的月份
+    singleShareSchedules: {}      // 分享的排班数据
   },
   onLoad: function (options) {
     // 检查是否为员工单人模式
@@ -114,38 +120,22 @@ Page({
         wx.showToast({ title: '数据解析失败', icon: 'none' })
       }
     } else if (options.share === '1' && options.schedules) {
-      // 分享的单人排班 - 直接从路径解析数据
+      // 分享的单人排班 - 显示排班信息面板
       try {
         const employee = decodeURIComponent(options.employee)
         const year = parseInt(options.year)
         const month = parseInt(options.month)
         const schedules = JSON.parse(decodeURIComponent(options.schedules))
 
-        console.log('=== Share Received ===')
-        console.log('employee:', employee)
-        console.log('schedules:', JSON.stringify(schedules))
-
-        // 显示保存确认弹窗
-        wx.showModal({
-          title: '收到排班分享',
-          content: `${employee}的${year}年${month}月排班表，是否保存到本地？`,
-          confirmText: '保存',
-          cancelText: '取消',
-          success: (res) => {
-            if (res.confirm) {
-              // 保存到本地存储
-              wx.setStorageSync('schedules', schedules)
-              wx.setStorageSync('isEmployeeMode', true)
-              wx.setStorageSync('employeeName', employee)
-            }
-            // 跳转页面显示
-            wx.reLaunch({
-              url: `/pages/index/index?employee=${encodeURIComponent(employee)}&year=${year}&month=${month}`
-            })
-          }
+        // 显示单人分享面板
+        this.setData({
+          showSingleSharePanel: true,
+          singleShareEmployee: employee,
+          singleShareYear: year,
+          singleShareMonth: month,
+          singleShareSchedules: schedules
         })
       } catch (e) {
-        console.error('解析分享数据失败:', e)
         wx.showToast({ title: '数据解析失败', icon: 'none' })
       }
     } else if (options.employee) {
@@ -453,6 +443,35 @@ Page({
       shareSelectYear: null,
       shareSelectMonth: null,
       shareSelectEmployees: []
+    })
+  },
+
+  // 关闭单人分享面板
+  closeSingleSharePanel() {
+    this.setData({
+      showSingleSharePanel: false,
+      singleShareEmployee: '',
+      singleShareYear: null,
+      singleShareMonth: null,
+      singleShareSchedules: {}
+    })
+  },
+
+  // 将单人分享数据加载到主页
+  loadSingleShareToHome() {
+    const { singleShareEmployee, singleShareYear, singleShareMonth, singleShareSchedules } = this.data
+    
+    // 保存到本地存储
+    wx.setStorageSync('schedules', singleShareSchedules)
+    wx.setStorageSync('isEmployeeMode', true)
+    wx.setStorageSync('employeeName', singleShareEmployee)
+    
+    // 关闭面板
+    this.closeSingleSharePanel()
+    
+    // 跳转主页（员工模式）
+    wx.reLaunch({
+      url: `/pages/index/index?employee=${encodeURIComponent(singleShareEmployee)}&year=${singleShareYear}&month=${singleShareMonth}`
     })
   },
 
@@ -982,6 +1001,28 @@ Page({
     customShifts = customShifts.map(s => typeof s === 'string' ? { name: s, color: '#9C27B0' } : s);
     const found = customShifts.find(s => s.name === type);
     return found ? found.color : '#9C27B0';
+  },
+
+  // 获取月份的日期数组（用于分享面板显示）
+  getMonthDays: function(year, month) {
+    const days = [];
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    const startWeekday = firstDay.getDay();
+    
+    // 填充月初空白
+    for (let i = 0; i < startWeekday; i++) {
+      days.push({ day: null, date: '' });
+    }
+    
+    // 填充日期
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      const date = new Date(year, month - 1, i);
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      days.push({ day: i, date: dateStr });
+    }
+    
+    return days;
   },
   // 更新上方的每日信息卡片
   updateTopCards: function() {

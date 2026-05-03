@@ -673,4 +673,113 @@ button {
   border-top: 1rpx solid #eee;
 }
 
+/* 单人分享排班信息面板 */
+.single-share-panel {
+  width: 90%;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.single-share-header {
+  text-align: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.single-share-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.single-share-content {
+  flex: 1;
+  padding: 20rpx;
+  overflow-y: auto;
+}
+
+.schedule-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-week-row {
+  display: flex;
+  background: #f5f6fa;
+  border-radius: 12rpx;
+  padding: 16rpx 0;
+  margin-bottom: 12rpx;
+}
+
+.schedule-week-day {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  color: #666;
+}
+
+.schedule-dates {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.schedule-date-item {
+  width: calc(100% / 7);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 0;
+  box-sizing: border-box;
+}
+
+.schedule-date-item.empty {
+  background: transparent;
+}
+
+.schedule-date-num {
+  font-size: 24rpx;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+
+.schedule-shift {
+  font-size: 18rpx;
+  color: #fff;
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.single-share-footer {
+  display: flex;
+  border-top: 1rpx solid #eee;
+}
+
+.single-share-cancel {
+  flex: 1;
+  text-align: center;
+  padding: 28rpx;
+  color: #666;
+  font-size: 30rpx;
+  border-right: 1rpx solid #eee;
+}
+
+.single-share-load {
+  flex: 1;
+  text-align: center;
+  padding: 28rpx;
+  color: #007AFF;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
 
