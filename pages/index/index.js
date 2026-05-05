@@ -120,21 +120,25 @@ Page({
         wx.showToast({ title: '数据解析失败', icon: 'none' })
       }
     } else if (options.share === '1' && options.schedules) {
-      // 分享的单人排班 - 显示排班信息面板
+      // 分享的单人排班 - 直接加载到主页
       try {
         const employee = decodeURIComponent(options.employee)
         const year = parseInt(options.year)
         const month = parseInt(options.month)
         const schedules = JSON.parse(decodeURIComponent(options.schedules))
 
-        // 显示单人分享面板
-        this.setData({
-          showSingleSharePanel: true,
-          singleShareEmployee: employee,
-          singleShareYear: year,
-          singleShareMonth: month,
-          singleShareSchedules: schedules
-        })
+        // 直接保存数据到本地
+        wx.setStorageSync('schedules', schedules)
+        wx.setStorageSync('isEmployeeMode', true)
+        wx.setStorageSync('employeeName', employee)
+
+        wx.showToast({ title: '加载成功', icon: 'success' })
+
+        setTimeout(() => {
+          wx.reLaunch({
+            url: `/pages/index/index?employee=${encodeURIComponent(employee)}`
+          })
+        }, 1500)
       } catch (e) {
         wx.showToast({ title: '数据解析失败', icon: 'none' })
       }
@@ -145,39 +149,41 @@ Page({
         const year = options.year ? parseInt(options.year) : new Date().getFullYear()
         const month = options.month ? parseInt(options.month) : new Date().getMonth() + 1
 
-        // 尝试从存储读取分享数据
-        const shareTempData = wx.getStorageSync('shareTempData') || {}
-        let schedules = {}
-
-        if (shareTempData.employee === employee && shareTempData.year == year && shareTempData.month == month) {
-          schedules = shareTempData.schedules || {}
-        } else {
-          // 从本地存储读取该员工排班
+        // 优先从 schedules 读取（分享选择后保存的数据）
+        let schedules = wx.getStorageSync('schedules') || {}
+        
+        // 如果 schedules 为空，尝试从 shareTempData 读取
+        if (Object.keys(schedules).length === 0) {
+          const shareTempData = wx.getStorageSync('shareTempData') || {}
+          if (shareTempData.employee === employee && shareTempData.year == year && shareTempData.month == month) {
+            schedules = shareTempData.schedules || {}
+          }
+        }
+        
+        // 如果还是为空，尝试从 allSchedules 读取
+        if (Object.keys(schedules).length === 0) {
           const allSchedules = wx.getStorageSync('allSchedules') || {}
           schedules = allSchedules[employee] || {}
         }
 
         console.log('员工模式 - employee:', employee, 'schedules:', JSON.stringify(schedules))
 
-        // 显示保存确认弹窗
-        wx.showModal({
-          title: '查看员工排班',
-          content: `${employee}的排班表，是否加载？`,
-          confirmText: '加载',
-          cancelText: '取消',
-          success: (res) => {
-            if (res.confirm) {
-              wx.setStorageSync('schedules', schedules)
-              wx.setStorageSync('isEmployeeMode', true)
-              wx.setStorageSync('employeeName', employee)
-            }
-            this.setData({
-              isEmployeeMode: true,
-              employeeName: employee,
-              schedules: schedules
-            })
-          }
-        })
+        // 如果已有数据，直接设置，不显示弹窗
+        if (Object.keys(schedules).length > 0) {
+          this.setData({
+            isEmployeeMode: true,
+            employeeName: employee,
+            schedules: schedules
+          })
+        } else {
+          // 没有数据时显示提示弹窗
+          wx.showModal({
+            title: '查看员工排班',
+            content: `${employee}暂无排班数据`,
+            showCancel: false,
+            confirmText: '知道了'
+          })
+        }
       } catch (e) {
         console.error('处理员工数据失败:', e)
         wx.showToast({ title: '数据加载失败', icon: 'none' })
@@ -240,19 +246,26 @@ Page({
   
   // 从本地加载数据
   loadDataFromLocal: function() {
-    if (this.data.isEmployeeMode && !this.data.schedules) {
-      // 员工模式：从allSchedules中加载该员工的排班
+    // 优先从 schedules 读取（分享数据保存到此）
+    const savedSchedules = wx.getStorageSync('schedules') || {}
+    const remarks = wx.getStorageSync('remarks') || {}
+    
+    if (this.data.isEmployeeMode && Object.keys(savedSchedules).length === 0) {
+      // 员工模式且 schedules 为空时，从 allSchedules 读取
       const allSchedules = wx.getStorageSync('allSchedules') || {}
       const empSchedules = allSchedules[this.data.employeeName] || {}
-      this.setData({ schedules: empSchedules })
+      this.setData({ schedules: empSchedules, remarks })
     } else {
-      // 原逻辑
-      const schedules = wx.getStorageSync('schedules') || {}
-      const remarks = wx.getStorageSync('remarks') || {}
-      this.setData({ schedules, remarks })
+      // 普通模式或 schedules 已有数据
+      this.setData({ schedules: savedSchedules, remarks })
     }
   },
   
+  // 显示通知中心（操作帮助）
+  showNotificationModal: function() {
+    this.setData({ showNotificationModal: true })
+  },
+
   // 关闭通知中心
   closeNotificationModal: function() {
     this.setData({ showNotificationModal: false })
@@ -454,6 +467,28 @@ Page({
       singleShareYear: null,
       singleShareMonth: null,
       singleShareSchedules: {}
+    })
+  },
+
+  // 退出员工模式，返回首页
+  exitEmployeeMode() {
+    wx.showModal({
+      title: '退出员工模式',
+      content: '确定要退出员工模式返回首页吗？',
+      confirmText: '确定',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 清除员工模式相关存储
+          wx.setStorageSync('isEmployeeMode', false)
+          wx.setStorageSync('employeeName', '')
+          
+          // 重新启动页面，不带参数
+          wx.reLaunch({
+            url: '/pages/index/index'
+          })
+        }
+      }
     })
   },
 

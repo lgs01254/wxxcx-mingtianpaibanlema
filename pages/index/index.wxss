@@ -5,12 +5,37 @@
   min-height: 100vh;
   box-sizing: border-box;
 }
+.employee-mode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
 .employee-title {
-  text-align: center;
   font-size: 36rpx;
   font-weight: bold;
-  margin-bottom: 20rpx;
   color: #007AFF;
+}
+.exit-employee-btn {
+  padding: 12rpx 24rpx;
+  background-color: #f0f0f0;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+.return-home-btn {
+  position: fixed;
+  bottom: 50rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 20rpx 60rpx;
+  background-color: #007AFF;
+  color: white;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 122, 255, 0.3);
+  z-index: 999;
 }
 .settings-btn {
   position: fixed;
@@ -25,6 +50,31 @@
   align-items: center;
   z-index: 9998;
   font-size: 30rpx;
+}
+/* 帮助说明样式 */
+.help-section {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eee;
+}
+.help-section:last-of-type {
+  border-bottom: none;
+}
+.help-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+.help-item {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.8;
+  padding: 4rpx 0;
+}
+.notification-section {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx dashed #ddd;
 }
 .weather-bar {
   width: 100%;

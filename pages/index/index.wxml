@@ -56,7 +56,7 @@
   </view>
 
   <!-- 员工模式标题 -->
-  <view wx:if="{{isEmployeeMode}}" class="employee-title">
+  <view wx:if="{{isEmployeeMode}}" class="employee-title" style="text-align: center; font-size: 36rpx; font-weight: bold; margin-bottom: 20rpx; color: #007AFF;">
     {{employeeName}}的{{currentMonth}}排班
   </view>
   
@@ -188,6 +188,10 @@
       </view>
     </block>
   </view>
+  <!-- 员工模式返回按钮 -->
+  <view wx:if="{{isEmployeeMode}}" class="return-home-btn" bindtap="exitEmployeeMode">
+    返回首页
+  </view>
   <view class="button-area" wx:if="{{!isEmployeeMode}}" style="height: 127rpx; display: flex; justify-content: space-around; align-items: center; box-sizing: border-box; padding: 0 10rpx; width: 712rpx; position: relative; left: -11rpx; top: -100rpx">
     <view bindtap="navigateToSchedule" style="width: 148rpx; height: 48rpx; background-color: #007AFF; color: white; display: flex; justify-content: center; align-items: center; border-radius: 8rpx; font-size: 20rpx; margin: 0 5rpx; box-sizing: border-box">排班</view>
     <button class="share-btn" open-type="share" data-share-type="monthSchedule" style="width: 148rpx; height: 50rpx; background-color: #007AFF; color: white; display: flex; justify-content: center; align-items: center; border-radius: 8rpx; font-size: 20rpx; margin: 0 5rpx; box-sizing: border-box; border: none;">分享</button>
@@ -235,26 +239,60 @@
   
   <!-- 通知中心弹窗 -->
   <view wx:if="{{showNotificationModal}}" class="remark-modal-mask" bindtap="closeNotificationModal"></view>
-  <view wx:if="{{showNotificationModal}}" class="remark-modal" style="top: 50%; transform: translate(-50%, -50%); width: 80%;">
+  <view wx:if="{{showNotificationModal}}" class="remark-modal" style="top: 50%; transform: translate(-50%, -50%); width: 80%; max-height: 70vh;">
     <view class="remark-header">
-      <text class="remark-title">通知中心</text>
+      <text class="remark-title">📖 操作帮助</text>
     </view>
-    <view class="remark-content" style="max-height: 500rpx; overflow-y: auto;">
-      <block wx:for="{{notifications}}" wx:key="_id">
-        <view class="notification-item" style="padding: 15rpx; border-bottom: 1rpx solid #eee; display: flex; justify-content: space-between; align-items: center;">
-          <view style="flex: 1;">
-            <text style="font-size: 24rpx;">{{item.content}}</text>
-            <text style="font-size: 18rpx; color: #999; margin-top: 5rpx; display: block;">{{item.createdAt}}</text>
+    <view class="remark-content" style="max-height: 60vh; overflow-y: auto;">
+      <!-- 操作说明 -->
+      <view class="help-section">
+        <view class="help-title">📱 基本操作</view>
+        <view class="help-item">• 长按日期可设置排班或添加备注</view>
+        <view class="help-item">• 点击顶部卡片可左右滑动查看更多日期</view>
+        <view class="help-item">• 滑动日历可切换月份</view>
+      </view>
+      
+      <view class="help-section">
+        <view class="help-title">📤 分享功能</view>
+        <view class="help-item">• 管理员可分享全部员工排班</view>
+        <view class="help-item">• 员工可分享个人排班表</view>
+        <view class="help-item">• 点击分享链接直接加载排班</view>
+      </view>
+      
+      <view class="help-section">
+        <view class="help-title">👤 员工模式</view>
+        <view class="help-item">• 打开分享链接自动进入员工模式</view>
+        <view class="help-item">• 点击底部"返回首页"退出</view>
+        <view class="help-item">• 员工模式仅可查看排班</view>
+      </view>
+      
+      <view class="help-section">
+        <view class="help-title">⚙️ 管理员面板</view>
+        <view class="help-item">• 点击左上角设置按钮进入</view>
+        <view class="help-item">• 可添加/删除员工</view>
+        <view class="help-item">• 支持导入Excel排班表</view>
+      </view>
+      
+      <!-- 通知列表 -->
+      <view wx:if="{{notifications.length > 0}}" class="notification-section">
+        <view class="help-title">🔔 通知消息</view>
+        <block wx:for="{{notifications}}" wx:key="_id">
+          <view class="notification-item" style="padding: 15rpx; border-bottom: 1rpx solid #eee; display: flex; justify-content: space-between; align-items: center;">
+            <view style="flex: 1;">
+              <text style="font-size: 24rpx;">{{item.content}}</text>
+              <text style="font-size: 18rpx; color: #999; margin-top: 5rpx; display: block;">{{item.createdAt}}</text>
+            </view>
+            <view wx:if="{{!item.isRead}}" style="width: 10rpx; height: 10rpx; background-color: red; border-radius: 5rpx; margin-left: 10rpx;"></view>
           </view>
-          <view wx:if="{{!item.isRead}}" style="width: 10rpx; height: 10rpx; background-color: red; border-radius: 5rpx; margin-left: 10rpx;"></view>
-        </view>
-      </block>
-      <view wx:if="{{notifications.length === 0}}" style="text-align: center; padding: 50rpx 0; color: #999;">
-        <text>暂无通知</text>
+        </block>
+      </view>
+      
+      <view wx:if="{{notifications.length === 0}}" style="text-align: center; padding: 20rpx 0; color: #999; font-size: 24rpx;">
+        <text>暂无通知消息</text>
       </view>
     </view>
     <view class="remark-buttons">
-      <button class="btn-primary" bindtap="closeNotificationModal">关闭</button>
+      <button class="btn-primary" bindtap="closeNotificationModal">知道了</button>
     </view>
   </view>
 </view>
